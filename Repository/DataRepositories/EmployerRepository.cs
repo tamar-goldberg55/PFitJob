@@ -1,0 +1,52 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
+using Repository.models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Repository.DataRepositories
+{
+    public class EmployerRepository : IRepository<Employer>
+
+    {
+        private readonly IContext _context;
+
+        public EmployerRepository(IContext context)
+        {
+            _context = context;
+
+        }
+        public async Task<Employer> AddItem(Employer item)
+        {
+            await _context.Employers.AddAsync(item);
+            _context.save();
+            return item;
+        }
+
+        public  async Task DeleteItem(int id)
+        {
+            _context.Employers.Remove(await GetById(id));
+            _context.save();
+        }
+
+        public Task<List<Employer>> GetAll()
+        {
+            return _context.Employers.ToListAsync();
+        }
+
+        public Task<Employer> GetById(int id)
+        {
+            return _context.Employers.ToList().FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task UpdateItem(int id, Employer item)
+        {
+            var employee = GetById(id);
+            employee.Name = item.Name;
+            _context.save();
+        }
+    }
+}
