@@ -36,12 +36,12 @@ namespace Repository.DataRepositories
 
         public Task<CandidateProfiles> GetById(int id)
         {
-            return _context.CandidateProfiles.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            return  _context.CandidateProfiles.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public  async Task UpdateItem(int id, CandidateProfiles item)
         {
-            var CandidateProfile = GetById(id);
+            var CandidateProfile = await GetById(id);
             CandidateProfile.Name = item.Name;//לבדוק את זה 
             _context.save();
         }
