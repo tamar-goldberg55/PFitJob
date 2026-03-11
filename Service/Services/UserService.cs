@@ -12,23 +12,44 @@ using Repository.Interfaces;
 
 namespace Service.Services
 {
-    public class UserService : IUser
+    public class UserService : TokenService, IUser
     {
         private readonly IRepository<User> _repository;
         private readonly IMapper mapper;
-        public UserService(IRepository<User> repository, IMapper map)
+        private readonly ITokenService _tokenService; // הוספנו את השירות של הטוקן
+        public UserService(IRepository<User> repository, IMapper map, ITokenService tokenService)
         {
             this._repository = repository;
             this.mapper = map;
+            this._tokenService = tokenService;
         }
-        public Task<UserDto> RegisterAsync(UserDto userDto, string password)
+        // הרישום מחזיר עכשיו Token במקום UserDto
+        public async Task<string> RegisterAsync(UserDto userDto, string password)
         {
-            throw new NotImplementedException();
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+            User newUser = mapper.Map<UserDto, User>(userDto);
+            newUser.PasswordHash = passwordHash;
+
+            var addedUser = await _repository.AddItem(newUser);
+
+            // אחרי שהמשתמש נוצר, יוצרים לו טוקן
+            return _tokenService.GenerateToken(addedUser);
         }
 
-        public Task<UserDto> LoginAsync(string email, string password)
+        public async Task<string> LoginAsync(string email, string password)
         {
-            throw new NotImplementedException();
+            // 1. שליפת כל המשתמשים (או המרה ל-List)
+            var allUsers = await _repository.GetAll();
+
+            // 2. מציאת המשתמש הספציפי עם LINQ
+            var user = allUsers.FirstOrDefault(u => u.Email == email);
+
+            // 3. בדיקת הסיסמה כפי שעשינו קודם
+            if (user != null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            {
+                return _tokenService.GenerateToken(user);
+            }
+            return null;
         }
 
         public Task<List<UserDto>> GetAll()//מתי מוסיפים async 

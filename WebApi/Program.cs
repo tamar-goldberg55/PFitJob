@@ -1,4 +1,7 @@
 
+using Service.Interfaces;
+using Service.Services;
+
 namespace WebApi
 {
     public class Program
@@ -31,6 +34,7 @@ namespace WebApi
             app.MapControllers();
 
             app.Run();
+            builder.Services.AddScoped<ITokenService, TokenService>();
         }
     }
 }

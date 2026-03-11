@@ -15,7 +15,7 @@ namespace Repository.DataRepositories
         {
             _context = context;
         }
-        public  async Task<JobListings> AddItem(JobListings item)
+        public async Task<JobListings> AddItem(JobListings item)
         {
             await _context.JobListings.AddAsync(item);
             _context.save();
@@ -40,9 +40,20 @@ namespace Repository.DataRepositories
 
         public async Task UpdateItem(int id, JobListings item)
         {
-            var jobListing = GetById(id);
-            category.Name = item.Name;
-            _context.save();
+            var jobListing = await GetById(id);
+
+            if (jobListing != null)
+            {
+                // 2. עדכון השדות - חשוב לעדכן את כל השדות שאת רוצה לשנות
+                // במודל שלך לא היה Name, אז הנה דוגמא לשדה שקיים (כמו Title)
+                jobListing.Title = item.Title;
+                jobListing.Description = item.Description;
+                jobListing.IsCatch = item.IsCatch; // זה הסטטוס שרצית
+                jobListing.Payment = item.Payment;
+
+                // 3. שמירה מסונכרנת (אופציונלי להפוך ל-Async גם ב-Context)
+                _context.save();
+            }
         }
     }
 }

@@ -37,10 +37,14 @@ namespace Repository.DataRepositories
             return _context.Employers.ToListAsync();
         }
 
-        public Task<Employer> GetById(int id)
+        public async Task<Employer> GetById(int id)
         {
-            return _context.Employers.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            //return _context.Employers.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            return await _context.Employers
+                 .Include(e => e.MyJobs) // שורה קריטית!
+                    .FirstOrDefaultAsync(e => e.Id == id);
         }
+      
 
         public async Task UpdateItem(int id, Employer item)
         {

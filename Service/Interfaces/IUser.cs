@@ -10,9 +10,10 @@ namespace Service.Interfaces
     public interface IUser:IService<UserDto>
     {
         // פונקציית רישום - מקבלת DTO ומחזירה את המשתמש שנוצר (או Token)
-        Task<UserDto> RegisterAsync(UserDto userDto, string password);
+        Task<string> RegisterAsync(UserDto userDto, string password);
 
         // פונקציית התחברות - מקבלת פרטי כניסה ומחזירה את פרטי המשתמש
-        Task<UserDto> LoginAsync(string email, string password);
+        Task<string> LoginAsync(string email, string password);
+
     }
 }

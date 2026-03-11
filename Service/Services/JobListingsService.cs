@@ -44,9 +44,26 @@ namespace Service.Services
             return mapper.Map<JobListings, JobListingsDto>(await _repository.GetById(id));
         }
 
-        public Task<bool> ToggleJobStatus(int jobId, bool isActive)
+        public async Task<bool> ToggleJobStatus(int jobId, bool isActive)
         {
-            throw new NotImplementedException();
+            // 1.שליפת המשרה הקיימת מה - Repository
+           var job = await _repository.GetById(jobId);
+
+            // 2. בדיקה אם המשרה קיימת
+            if (job == null)
+            {
+                return false; // או לזרוק שגיאה לפי הסטנדרט שלכם
+            }
+
+            // 3. עדכון הסטטוס (שימוש ב-IsCatch כפי שהגדרת)
+            job.IsCatch = isActive;
+
+            // 4. שמירת השינויים ב-Repository
+            // אני מניח שקיימת פונקציית Update או UpdateItem ב-Repository שלך
+            await _repository.UpdateItem(jobId,job);
+
+            return true; // החזרת הצלחה
+
         }
 
         public Task UpdateItem(int id, JobListingsDto item)

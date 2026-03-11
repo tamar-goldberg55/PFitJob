@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Repository.models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,7 +17,7 @@ namespace Service.Dto
         public decimal MinHourlyRate { get; set; }
         public bool Activity { get; set; } // האם הפרופיל פעיל
 
-        public string Level { get; set; } // שליחת ה-Enum כטקסט (למשל "Easy")
+        public elevel Level { get; set; } // שליחת ה-Enum כטקסט (למשל "Easy")
         public int LevelValue { get; set; } // שליחת ה-Enum כמספר (למשל 0) - עוזר לחישובים ב-React
 
         public bool IsRemoteOnly { get; set; }

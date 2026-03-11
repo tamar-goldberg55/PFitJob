@@ -16,12 +16,27 @@ namespace Service.Services
     {
         private readonly IRepository<CandidateProfiles> _repository;
         private readonly IMapper mapper;
-        public CandidateService(IRepository<CandidateProfiles> repository, IMapper map)
+        private readonly IJobListings _jobService; // הוספנו משתנה חדש
+        public CandidateService(IRepository<CandidateProfiles> repository, IMapper map, IJobListings jobService)
         {
             _repository = repository;
             mapper = map;
+            _jobService = jobService; // שמירה במשתנה מחלקתי
         }
+        public async Task CandidateTakesJob(int candidateId, int jobId)
+        {
+            // 1. עדכון המשרה דרך ה-Service של המשרות
+            await _jobService.ToggleJobStatus(jobId, false);
 
+            // 2. עדכון המועמד דרך ה-Repository המקומי
+            var candidate = await _repository.GetById(candidateId);
+            if (candidate != null)
+            {
+                candidate.activity = false;
+                // אנחנו מעבירים את ה-ID ואת האובייקט המעודכן ל-UpdateItem
+                await _repository.UpdateItem(candidateId, candidate);
+            }
+        }
         public async Task<CandidateProfileDto> AddItem(CandidateProfileDto item)
         {
             return mapper.Map<CandidateProfiles, CandidateProfileDto>(
@@ -53,9 +68,27 @@ namespace Service.Services
             throw new NotImplementedException();
         }
 
-        public Task<bool> UpdatePreferences(int candidateId, CandidateProfileDto preferences)
+      
+        public async Task<bool> UpdatePreferences(int candidateId, CandidateProfileDto preferences)
         {
-            throw new NotImplementedException();
+            // 1. שליפת המועמד הקיים
+            CandidateProfiles can = await _repository.GetById(candidateId);
+
+            if (can == null) return false;
+
+            // 2. עדכון השדות (שימי לב שאני לא נוגעת ב-Id וב-User)
+            can.activity = preferences.Activity;
+            can.City = preferences.City;
+            can.MaxDistance = preferences.MaxDistance;
+            can.IsRemoteOnly = preferences.IsRemoteOnly;
+            can.level = preferences.Level;
+            can.MinHourlyRate = preferences.MinHourlyRate;
+            can.Withpepole = preferences.WithPeople;
+
+            // 3. עדכון בבסיס הנתונים (שימוש ב-UpdateItem שהגדרנו)
+            await _repository.UpdateItem(candidateId, can);
+
+            return true;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Repository.DataRepositories;
 using Repository.Interfaces;
 using Repository.models;
 using Service.Dto;
@@ -20,11 +21,25 @@ namespace Service.Services
                 _repository = repository;
                    mapper=map;
         }
-        public Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
+        public async Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
         {
-            throw new NotImplementedException();
-        }
+            // משתמשים ב-_repository (עם קו תחתון) שהגדרת ב-Constructor
+            var employer = await _repository.GetById(employerId);
 
+            // אם המעסיק לא קיים או שרשימת המשרות ריקה
+            if (employer == null || employer.MyJobs == null)
+            {
+                return new List<JobListingsDto>();
+            }
+
+            // משתמשים ב-mapper (שהגדרת כ-mapper) כדי להמיר את המשרות
+            // אני מניח שיש לך פונקציית מיפוי ב-mapper או שאת משתמשת ב-mapper.Map
+            var jobsDto = employer.MyJobs
+                .Select(job => mapper.Map<JobListings, JobListingsDto>(job))
+                .ToList();
+
+            return jobsDto;
+        }
         public Task<EmployerDto> GetEmployerStats(int employerId)
         {
             throw new NotImplementedException();
