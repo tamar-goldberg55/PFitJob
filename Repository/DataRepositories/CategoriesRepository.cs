@@ -25,8 +25,19 @@ namespace Repository.DataRepositories
 
         public async Task DeleteItem(int id)
         {
-            await context.Categories.ToListAsync().Remove(await GetById(id));
-            context.save();
+            //await context.Categories.ToListAsync().Remove(await GetById(id));
+            //context.save();
+            // 1. קודם כל מקבלים את האובייקט בצורה אסינכרונית
+            var item = await GetById(id);
+
+            if (item != null)
+            {
+                // 2. מסירים אותו ישירות מה-Categories (בלי ToListAsync!)
+                context.Categories.Remove(item);
+
+                // 3. קוראים לפונקציית ה-save שלך (בלי await כי היא void)
+                context.save();
+            }
 
         }
 
@@ -37,7 +48,8 @@ namespace Repository.DataRepositories
 
         public async Task<Categories> GetById(int id)
         {
-            return await context.Categories.ToListAsync().FirstOrDefaultAsync(x => x.Id == id);
+           /* return await context.Categories.ToListAsync().FirstOrDefaultAsync(x => x.Id == id)*/;
+            return await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task UpdateItem(int id, Categories item)

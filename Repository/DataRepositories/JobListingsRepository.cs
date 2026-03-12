@@ -1,4 +1,5 @@
-﻿using Repository.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
 using Repository.models;
 using System;
 using System.Collections.Generic;
@@ -28,14 +29,15 @@ namespace Repository.DataRepositories
             _context.save();
         }
 
-        public Task<List<JobListings>> GetAll()
+        public  Task<List<JobListings>> GetAll()
         {
-            return _context.JobListings.ToListAsync();
+            return  _context.JobListings.ToListAsync();
         }
 
         public Task<JobListings> GetById(int id)
         {
-            return _context.JobListings.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            //return _context.JobListings.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            return  _context.JobListings.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task UpdateItem(int id, JobListings item)

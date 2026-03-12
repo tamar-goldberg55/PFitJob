@@ -1,4 +1,5 @@
-﻿using Repository.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
 using Repository.models;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace Repository.DataRepositories
 
         public Task<User> GetById(int id)
         {
-            return _context.Users.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            return _context.Users.FirstOrDefaultAsync(x => x.Id == id);//הורדתי tolist 
         }
 
         public async Task UpdateItem(int id, User item)

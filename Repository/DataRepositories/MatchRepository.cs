@@ -1,4 +1,5 @@
-﻿using Repository.Interfaces;
+﻿using Microsoft.EntityFrameworkCore;
+using Repository.Interfaces;
 using Repository.models;
 using System;
 using System.Collections.Generic;
@@ -36,7 +37,7 @@ namespace Repository.DataRepositories
 
         public Task<Match> GetById(int id)
         {
-            return _context.Match.ToList().FirstOrDefaultAsync(x => x.Id == id);
+            return _context.Match.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public  async Task UpdateItem(int id, Match item)
