@@ -42,9 +42,25 @@ namespace Repository.DataRepositories
 
         public  async Task UpdateItem(int id, Match item)
         {
-            var match =await GetById(id);
-            match.Name = item.Name;
-            _context.save();
+            //var match =await GetById(id);
+            //match.Name = item.Name;
+            //_context.save();
+            //--------
+            var existingMatch = await GetById(id);
+
+            // 2. בדיקה שהאובייקט אכן נמצא
+            if (existingMatch != null)
+            {
+                // 3. עדכון השדות הרלוונטיים מהמודל Match
+                existingMatch.MatchScore = item.MatchScore;
+                existingMatch.MatchDate = item.MatchDate;
+
+                // בדרך כלל לא נרצה לעדכן את ה-JobId או ה-CandidateId בתוך Update,
+                // כי אם הם משתנים, זה כבר נחשב "Match" חדש לגמרי.
+
+                // 4. שמירת השינויים
+                _context.save();
+            }
         }
     }
 }

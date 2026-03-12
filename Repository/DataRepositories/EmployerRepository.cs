@@ -37,7 +37,7 @@ namespace Repository.DataRepositories
             return _context.Employers.ToListAsync();
         }
 
-        public async Task<Employer> GetById(int id)
+        public async Task<Employer?> GetById(int id)
         {
             //return _context.Employers.ToList().FirstOrDefaultAsync(x => x.Id == id);
             return await _context.Employers
