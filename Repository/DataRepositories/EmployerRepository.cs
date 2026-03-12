@@ -48,8 +48,9 @@ namespace Repository.DataRepositories
 
         public async Task UpdateItem(int id, Employer item)
         {
-            var employee = GetById(id);
-            employee.Name = item.Name;
+            var employee = await GetById(id);
+            employee.CompanyName = item.CompanyName;
+            employee.status = item.status;
             _context.save();
         }
     }

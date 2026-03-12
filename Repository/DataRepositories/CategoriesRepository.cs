@@ -52,11 +52,11 @@ namespace Repository.DataRepositories
             return await context.Categories.FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task UpdateItem(int id, Categories item)
+        public async Task UpdateItem(int id, Categories item)//האם צריכה לעדכן גם את הרשימה ?
         {
-            var category = GetById(id);
+            var category = await GetById(id);
             category.Name = item.Name;
-            _context.save();
+            context.save();
         }
     }
 }

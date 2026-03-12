@@ -42,7 +42,7 @@ namespace Repository.DataRepositories
 
         public  async Task UpdateItem(int id, Match item)
         {
-            var match = GetById(id);
+            var match =await GetById(id);
             match.Name = item.Name;
             _context.save();
         }

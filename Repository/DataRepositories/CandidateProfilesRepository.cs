@@ -41,9 +41,26 @@ namespace Repository.DataRepositories
 
         public  async Task UpdateItem(int id, CandidateProfiles item)
         {
-            var CandidateProfile = await GetById(id);
-            CandidateProfile.Name = item.Name;//לבדוק את זה 
-            _context.save();
+            //var CandidateProfile = await GetById(id);
+            //CandidateProfile.Name = item.Name;//לבדוק את זה 
+            //_context.save();
+            var existingProfile = await GetById(id);
+
+            if (existingProfile != null)
+            {
+                // עדכון השדות בהתאם למודל CandidateProfiles
+                existingProfile.City = item.City;
+                existingProfile.MaxDistance = item.MaxDistance;
+                existingProfile.MinHourlyRate = item.MinHourlyRate;
+                existingProfile.activity = item.activity;
+                existingProfile.level = item.level;
+                existingProfile.IsRemoteOnly = item.IsRemoteOnly;
+                existingProfile.Withpepole = item.Withpepole;
+
+                // הערה: בדרך כלל לא מעדכנים את ה-UserId או ה-Id עצמו
+
+                _context.save();
+            }
         }
     }
 }
