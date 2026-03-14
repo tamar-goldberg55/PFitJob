@@ -61,9 +61,12 @@ namespace Service.Services
           await _repository.AddItem(mapper.Map<EmployerDto, Employer>(item)));
         }
 
-        public Task UpdateItem(int id, EmployerDto item)
+        public async Task UpdateItem(int id, EmployerDto item)
         {
-            throw new NotImplementedException();
+            var EmployerEntity = mapper.Map<EmployerDto, Employer>(item);
+
+            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
+            await _repository.UpdateItem(id, EmployerEntity);
         }
 
         public async Task DeleteItem(int id)

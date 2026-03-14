@@ -41,9 +41,12 @@ namespace Service.Services
             return mapper.Map<Categories, CategoriesDto>(await _repository.GetById(id));
         }
 
-        public Task UpdateItem(int id, CategoriesDto item)
+        public async Task UpdateItem(int id, CategoriesDto item)
         {
-            throw new NotImplementedException();
+            var categoryEntity = mapper.Map<CategoriesDto, Categories>(item);
+
+            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
+            await _repository.UpdateItem(id, categoryEntity);
         }
     }
 }

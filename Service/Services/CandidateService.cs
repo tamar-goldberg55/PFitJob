@@ -63,9 +63,12 @@ namespace Service.Services
             throw new NotImplementedException();
         }
 
-        public Task UpdateItem(int id, CandidateProfileDto item)
+        public async Task UpdateItem(int id, CandidateProfileDto item)
         {
-            throw new NotImplementedException();
+            var CandidateProfileEntity = mapper.Map<CandidateProfileDto, CandidateProfiles>(item);
+
+            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
+            await _repository.UpdateItem(id, CandidateProfileEntity);
         }
 
       

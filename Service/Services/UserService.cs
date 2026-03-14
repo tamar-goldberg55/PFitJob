@@ -69,9 +69,12 @@ namespace Service.Services
 
         }
 
-        public Task UpdateItem(int id, UserDto item)
+        public async Task UpdateItem(int id, UserDto item)
         {
-            throw new NotImplementedException();
+            var UserEntity = mapper.Map<UserDto, User>(item);
+
+            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
+            await _repository.UpdateItem(id, UserEntity);
         }
 
         public async Task DeleteItem(int id)

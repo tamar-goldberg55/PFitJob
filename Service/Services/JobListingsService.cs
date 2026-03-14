@@ -66,9 +66,12 @@ namespace Service.Services
 
         }
 
-        public Task UpdateItem(int id, JobListingsDto item)
+        public async Task UpdateItem(int id, JobListingsDto item)
         {
-            throw new NotImplementedException();
+            var JobListingsEntity = mapper.Map<JobListingsDto, JobListings>(item);
+
+            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
+            await _repository.UpdateItem(id, JobListingsEntity);
         }
     }
 }
