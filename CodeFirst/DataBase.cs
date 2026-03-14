@@ -9,9 +9,14 @@ using System.Threading.Tasks;
 
 namespace CodeFirst
 {
+    
     public class DataBase : DbContext, IContext
     {
-        
+        //חייב להיות?
+        public DataBase(DbContextOptions<DataBase> options) : base(options)
+        {
+        }
+
         public DbSet<CandidateProfiles> CandidateProfiles { get; set; }
         public DbSet<Categories> Categories { get ; set; }
         public DbSet<User> Users { get ; set ; }

@@ -14,7 +14,7 @@ namespace Repository.models
             public string Name { get; set; }
 
             // קשרים חזרה (בשביל ה-Entity Framework)
-            public List<JobListings> Jobs { get; set; }
+            public List<JobListings>? Jobs { get; set; }
            
         
     }

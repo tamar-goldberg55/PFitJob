@@ -1,4 +1,5 @@
 
+using Microsoft.EntityFrameworkCore;
 using Service.Interfaces;
 using Service.Services;
 
@@ -11,12 +12,16 @@ namespace WebApi
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            // הוספת ה-DbContext למערכת
+            builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-
+            builder.Services.AddScoped<ITokenService, TokenService>();
+         
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -34,7 +39,7 @@ namespace WebApi
             app.MapControllers();
 
             app.Run();
-            builder.Services.AddScoped<ITokenService, TokenService>();
+           
         }
     }
 }
