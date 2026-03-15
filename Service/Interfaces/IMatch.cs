@@ -13,6 +13,10 @@ namespace Service.Interfaces
 
         Task<List<MatchDto>> RunMatchingAlgorithm(int jobId); //– פונקציה שרצה על כל המועמדים ומעדכנת את טבלת ההתאמות למשרה ספציפית.
         Task<List<MatchDto>> GetTopMatchesForCandidate(int candidateId, int topCount);// – החזרת המשרות הטובות ביותר עבור מועמד מסוים.
+        Task<double> SolveDP(int candIdx, int jobMask, double[,] matrix, int n, int m);
+        Task<double> GetGlobalSatisfactionRate();
+
+
     }
 }
 

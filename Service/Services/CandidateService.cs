@@ -17,11 +17,13 @@ namespace Service.Services
         private readonly IRepository<CandidateProfiles> _repository;
         private readonly IMapper mapper;
         private readonly IJobListings _jobService; // הוספנו משתנה חדש
-        public CandidateService(IRepository<CandidateProfiles> repository, IMapper map, IJobListings jobService)
+        private readonly IMatch _matchService; // הזרקה של שירות השידוכים
+        public CandidateService(IRepository<CandidateProfiles> repository, IMapper map, IJobListings jobService, IMatch matchService)
         {
             _repository = repository;
             mapper = map;
             _jobService = jobService; // שמירה במשתנה מחלקתי
+            _matchService = matchService;
         }
         public async Task CandidateTakesJob(int candidateId, int jobId)
         {
@@ -58,9 +60,19 @@ namespace Service.Services
               return mapper.Map<CandidateProfiles, CandidateProfileDto>(await _repository.GetById(id));
         }
 
-        public Task<JobListingsDto> GetMatchingJobs(int candidateId)
+        public async Task<JobListingsDto> GetMatchingJobs(int candidateId)
         {
-            throw new NotImplementedException();
+            // אנחנו קוראים לפונקציה שבנינו קודם ב-MatchService
+            // היא כבר יודעת להסתכל על IsSelectedByAlgorithm
+            var topMatches = await _matchService.GetTopMatchesForCandidate(candidateId, 1);
+
+            var bestMatch = topMatches.FirstOrDefault();
+
+            if (bestMatch == null) return null;
+
+            // מחזירים את אובייקט המשרה מתוך ה-Match
+            // הערה: ודאי שב-MatchDto שלך יש שדה שנקרא Job מסוג JobListingsDto
+            return mapper.Map<JobListingsDto>(bestMatch.Job);
         }
 
         public async Task UpdateItem(int id, CandidateProfileDto item)

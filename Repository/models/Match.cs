@@ -21,6 +21,7 @@ namespace Repository.models
         public CandidateProfiles Candidate { get; set; }
         public double MatchScore { get; set; } // אחוז התאמה (למשל 95.5)
         public DateTime MatchDate { get; set; } // תאריך ריצת האלגוריתם
+        public bool IsSelectedByAlgorithm { get; set; }
 
     }
 }
