@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Service.Dto;
+using Service.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -8,36 +10,55 @@ namespace WebApi.Controllers
     [ApiController]
     public class JobListingController : ControllerBase
     {
-        // GET: api/<JobListingController>
+        private readonly IJobListings _jobListingsService;
+
+        // הזרקת השירות (Dependency Injection)
+        public JobListingController(IJobListings jobListingsService)
+        {
+            _jobListingsService = jobListingsService;
+        }
+
+        // GET: api/JobListings
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<List<JobListingsDto>> Get()
         {
-            return new string[] { "value1", "value2" };
+            return await _jobListingsService.GetAll();
         }
 
-        // GET api/<JobListingController>/5
+        // GET api/JobListings/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<JobListingsDto> Get(int id)
         {
-            return "value";
+            return await _jobListingsService.GetById(id);
         }
 
-        // POST api/<JobListingController>
+        // POST api/JobListings
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<JobListingsDto> Post([FromBody] JobListingsDto jobDto)
         {
+            return await _jobListingsService.AddItem(jobDto);
         }
 
-        // PUT api/<JobListingController>/5
+        // PUT api/JobListings/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task Put(int id, [FromBody] JobListingsDto jobDto)
         {
+            await _jobListingsService.UpdateItem(id, jobDto);
         }
 
-        // DELETE api/<JobListingController>/5
+        // DELETE api/JobListings/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
+            await _jobListingsService.DeleteItem(id);
+        }
+
+        // בונוס: פונקציה לעדכון סטטוס המשרה (Toggle) כפי שהגדרת בסרביס
+        [HttpPatch("{id}/status")]
+        public async Task<bool> ToggleStatus(int id, [FromQuery] bool isActive)
+        {
+            return await _jobListingsService.ToggleJobStatus(id, isActive);
         }
     }
 }
+

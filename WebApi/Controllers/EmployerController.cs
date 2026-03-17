@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Service.Dto;
+using Service.Interfaces;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -8,36 +10,57 @@ namespace WebApi.Controllers
     [ApiController]
     public class EmployerController : ControllerBase
     {
-        // GET: api/<EmployerController>
+        private readonly IEmployer _employerService;
+
+        // הזרקת השירות דרך ה-Constructor
+        public EmployerController(IEmployer employerService)
+        {
+            _employerService = employerService;
+        }
+
+        // GET: api/Employer
         [HttpGet]
-        public IEnumerable<string> Get()
+        public async Task<List<EmployerDto>> Get()
         {
-            return new string[] { "value1", "value2" };
+            // מחזיר את הרשימה ישירות
+            return await _employerService.GetAll();
         }
 
-        // GET api/<EmployerController>/5
+        // GET api/Employer/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public async Task<EmployerDto> Get(int id)
         {
-            return "value";
+            // מחזיר את האובייקט ישירות. 
+            // אם לא נמצא, ה-Client יקבל בדרך כלל 204 No Content או null
+            return await _employerService.GetById(id);
         }
 
-        // POST api/<EmployerController>
+        // GET api/Employer/5/jobs
+        [HttpGet("{id}/jobs")]
+        public async Task<List<JobListingsDto>> GetJobs(int id)
+        {
+            return await _employerService.GetEmployerJobs(id);
+        }
+
+        // POST api/Employer
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<EmployerDto> Post([FromBody] EmployerDto employerDto)
         {
+            return await _employerService.AddItem(employerDto);
         }
 
-        // PUT api/<EmployerController>/5
+        // PUT api/Employer/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task Put(int id, [FromBody] EmployerDto employerDto)
         {
+            await _employerService.UpdateItem(id, employerDto);
         }
 
-        // DELETE api/<EmployerController>/5
+        // DELETE api/Employer/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(int id)
         {
+            await _employerService.DeleteItem(id);
         }
     }
 }
