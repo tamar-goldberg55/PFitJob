@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Repository.Interfaces;
+using Repository.models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,9 +12,11 @@ namespace WebApi.Controllers
     {
         // GET: api/<CandidateController>
         [HttpGet]
-        public IEnumerable<string> Get()
+        private readonly IRepository<CandidateProfiles> repository;
+
+        public CandidateController(IRepository<CandidateProfiles> repository)
         {
-            return new string[] { "value1", "value2" };
+            this.repository = repository;
         }
 
         // GET api/<CandidateController>/5
