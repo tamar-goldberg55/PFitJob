@@ -50,9 +50,13 @@ namespace Service.Services
             await _repository.DeleteItem(id);
         }
 
-        public Task<List<CandidateProfileDto>> GetAll()
+        public async Task<List<CandidateProfileDto>> GetAll()
         {
-            return mapper.Map<Task<List<CandidateProfiles>>, Task<List<CandidateProfileDto>>>(_repository.GetAll());
+            // 1. מחכים שה-Repository יסיים להביא את הנתונים מה-DB
+            var candidates = await _repository.GetAll();
+
+            // 2. ממפים את הרשימה שחזרה (List) לרשימה של ה-Dto
+            return mapper.Map<List<CandidateProfileDto>>(candidates);
         }
 
         public async Task<CandidateProfileDto> GetById(int id)

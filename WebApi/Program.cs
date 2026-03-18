@@ -21,6 +21,7 @@ namespace WebApi
             // הוספת ה-DbContext למערכת
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+            builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -34,15 +35,16 @@ namespace WebApi
 
             // בנוסף, ודא ש-AutoMapper רשום (מכיוון שהוספת IMapper)
             // builder.Services.AddAutoMapper(typeof(Program));
-            builder.Services.AddAutoMapper(typeof(MyMapper));
-          
+            //builder.Services.AddAutoMapper(typeof(MyMapper));
+            builder.Services.AddAutoMapper(typeof(Service.Services.MyMapper).Assembly);
+
             // רישום ה-Repositories עבור כל מודל בנפרד
-            //builder.Services.AddScoped<IRepository<User>, UserRepository>();
-            //builder.Services.AddScoped<IRepository<Employer>, EmployerRepository>();
-            //builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
-            //builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
-            //builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
-            //builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
+            builder.Services.AddScoped<IRepository<User>, UserRepository>();
+            builder.Services.AddScoped<IRepository<Employer>, EmployerRepository>();
+            builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
+            builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
+            builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
+            builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
             //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository.DataRepositories<>));
             var app = builder.Build();
 

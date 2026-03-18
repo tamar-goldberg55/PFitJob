@@ -36,7 +36,7 @@ namespace CodeFirst
             if (!optionsBuilder.IsConfigured)
             {
                 // כאן את כותבת את שורת החיבור שלך
-                optionsBuilder.UseSqlServer("Server=SITTON;Database=JobDataBase;Trusted_Connection=True;TrustServerCertificate=True;");
+                optionsBuilder.UseSqlServer("Server=DESKTOP-SVITPH4;Database=JobDataBase;Trusted_Connection=True;TrustServerCertificate=True;");
             }
 
 

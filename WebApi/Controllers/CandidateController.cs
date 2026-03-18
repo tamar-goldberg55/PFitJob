@@ -22,9 +22,10 @@ namespace WebApi.Controllers
 
         // קבלת כל המועמדים
         [HttpGet]
-        public Task<List<CandidateProfileDto>> GetAll()
+        public async Task<List<CandidateProfileDto>> GetAll()
         {
-            return _candidateService.GetAll();
+            // חייב await כאן כדי שה-Task יהפוך לרשימה אמיתית
+            return await _candidateService.GetAll();
         }
 
         // קבלת מועמד לפי ID
