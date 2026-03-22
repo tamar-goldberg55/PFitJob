@@ -13,7 +13,7 @@ namespace Service.Dto
 
         public string Name { get; set; }
         public string Email { get; set; }
-        public string UserType { get; set; } // הופכים את ה-Enum לטקסט
+        public string? UserType { get; set; } // הופכים את ה-Enum לטקסט
         public bool IsEnable { get; set; }
     }
 }

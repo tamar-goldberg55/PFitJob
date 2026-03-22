@@ -14,9 +14,9 @@ namespace Repository.models
         public int Id { get; set; }
         [ForeignKey("User")]
         public int UserId { get; set; } // FK למשתמש
-        public User User { get; set; }
+        public User ?User { get; set; }
 
-        public string CompanyName { get; set; }
+        public string ?CompanyName { get; set; }
 
         // קשר גומלין: 1 לרבים (מעסיק אחד מחזיק רשימת משימות)
         public List<JobListings> MyJobs { get; set; } = new List<JobListings>();

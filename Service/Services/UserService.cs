@@ -2,49 +2,102 @@
 using Repository.models;
 using Service.Dto;
 using Service.Interfaces;
-using Repository.DataRepositories;
-using System;
+using Repository.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Repository.Interfaces;
 
 namespace Service.Services
 {
-    public class UserService : TokenService, IUser
+    // הערה: הסרתי את ההורשה מ-TokenService כי אנחנו מזריקים אותו בבנאי (Dependency Injection)
+    public class UserService : IUser
     {
-        private readonly IRepository<User> _repository;
-        private readonly IMapper mapper;
-        private readonly ITokenService _tokenService; // הוספנו את השירות של הטוקן
-        public UserService(IRepository<User> repository, IMapper map, ITokenService tokenService)
+        private readonly IRepository<User> _userRepository;
+        private readonly IRepository<CandidateProfiles> _candidateRepository;
+        private readonly IRepository<Employer> _employerRepository;
+        private readonly IMapper _mapper;
+        private readonly ITokenService _tokenService;
+
+        public UserService(
+            IRepository<User> userRepository,
+            IRepository<CandidateProfiles> candidateRepository,
+            IRepository<Employer> employerRepository,
+            IMapper map,
+            ITokenService tokenService)
         {
-            this._repository = repository;
-            this.mapper = map;
-            this._tokenService = tokenService;
+            _userRepository = userRepository;
+            _candidateRepository = candidateRepository;
+            _employerRepository = employerRepository;
+            _mapper = map;
+            _tokenService = tokenService;
         }
-        // הרישום מחזיר עכשיו Token במקום UserDto
-        public async Task<string> RegisterAsync(UserDto userDto, string password)
+
+        //public async Task<string> RegisterAsync(UserDto userDto, string password, UserRole role)
+        //{
+        //    // 1. הצפנת סיסמה
+        //    string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
+
+        //    // 2. מיפוי ל-Entity
+        //    User newUser = _mapper.Map<User>(userDto);
+        //    newUser.PasswordHash = passwordHash;
+        //    newUser.UserType = role; // ודאי שבמודל User קוראים לשדה UserType או Role
+        //    newUser.IsEnable = true;
+
+        //    // 3. שמירה בבסיס הנתונים
+        //    var addedUser = await _userRepository.AddItem(newUser);
+
+        //    // 4. יצירת פרופיל ריק לפי התפקיד
+        //    if (role == UserRole.Candidate)
+        //    {
+        //        await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id });
+        //    }
+        //    else if (role == UserRole.Employer)
+        //    {
+        //        await _employerRepository.AddItem(new Employer { UserId = addedUser.Id });
+        //    }
+
+        //    return _tokenService.GenerateToken(addedUser);
+        //}
+        // הרשמה למועמד - השרת קובע שהתפקיד הוא Candidate
+        public async Task<string> RegisterCandidateAsync(UserDto userDto, string password)
+        {
+            return await InternalRegister(userDto, password, UserRole.Candidate);
+        }
+
+        // הרשמה למעסיק - השרת קובע שהתפקיד הוא Employer
+        public async Task<string> RegisterEmployerAsync(UserDto userDto, string password)
+        {
+            return await InternalRegister(userDto, password, UserRole.Employer);
+        }
+
+        // פונקציית עזר פרטית (private) שאליה המשתמש לא יכול לגשת ישירות
+        private async Task<string> InternalRegister(UserDto userDto, string password, UserRole role)
         {
             string passwordHash = BCrypt.Net.BCrypt.HashPassword(password);
-            User newUser = mapper.Map<UserDto, User>(userDto);
+            User newUser = _mapper.Map<User>(userDto);
             newUser.PasswordHash = passwordHash;
+            newUser.UserType = role;
+            newUser.IsEnable = true;
 
-            var addedUser = await _repository.AddItem(newUser);
+            var addedUser = await _userRepository.AddItem(newUser);
 
-            // אחרי שהמשתמש נוצר, יוצרים לו טוקן
+            if (role == UserRole.Candidate)
+            {
+                await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id });
+            }
+            else if (role == UserRole.Employer)
+            {
+                await _employerRepository.AddItem(new Employer { UserId = addedUser.Id });
+            }
+
             return _tokenService.GenerateToken(addedUser);
         }
 
         public async Task<string> LoginAsync(string email, string password)
         {
-            // 1. שליפת כל המשתמשים (או המרה ל-List)
-            var allUsers = await _repository.GetAll();
-
-            // 2. מציאת המשתמש הספציפי עם LINQ
+            var allUsers = await _userRepository.GetAll();
             var user = allUsers.FirstOrDefault(u => u.Email == email);
 
-            // 3. בדיקת הסיסמה כפי שעשינו קודם
             if (user != null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
             {
                 return _tokenService.GenerateToken(user);
@@ -52,36 +105,34 @@ namespace Service.Services
             return null;
         }
 
-        public Task<List<UserDto>> GetAll()//מתי מוסיפים async 
+        public async Task<List<UserDto>> GetAll()
         {
-            return mapper.Map<Task<List<User>>, Task<List<UserDto>>>(_repository.GetAll());
+            var users = await _userRepository.GetAll();
+            return _mapper.Map<List<UserDto>>(users);
         }
 
         public async Task<UserDto> GetById(int id)
         {
-            return mapper.Map<User, UserDto>(await _repository.GetById(id));
+            var user = await _userRepository.GetById(id);
+            return _mapper.Map<UserDto>(user);
         }
 
         public async Task<UserDto> AddItem(UserDto item)
         {
-            return mapper.Map<User, UserDto>(
-         await _repository.AddItem(mapper.Map<UserDto, User>(item)));
-
+            var entity = _mapper.Map<User>(item);
+            var added = await _userRepository.AddItem(entity);
+            return _mapper.Map<UserDto>(added);
         }
 
         public async Task UpdateItem(int id, UserDto item)
         {
-            var UserEntity = mapper.Map<UserDto, User>(item);
-
-            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
-            await _repository.UpdateItem(id, UserEntity);
+            var userEntity = _mapper.Map<User>(item);
+            await _userRepository.UpdateItem(id, userEntity);
         }
 
         public async Task DeleteItem(int id)
         {
-            await _repository.DeleteItem(id);
+            await _userRepository.DeleteItem(id);
         }
-
-
     }
-};
+}
