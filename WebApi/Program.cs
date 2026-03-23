@@ -33,6 +33,7 @@ namespace WebApi
             builder.Services.AddScoped<IJobListings, JobListingsService>(); // ודא שזה שם המחלקה המממשת
             builder.Services.AddScoped<IMatch, MatchService>();     // ודא שזה שם המחלקה המממשת
             builder.Services.AddScoped<IUser, UserService>();
+            builder.Services.AddScoped<ICategories, CategoryService>();
 
             // בנוסף, ודא ש-AutoMapper רשום (מכיוון שהוספת IMapper)
             // builder.Services.AddAutoMapper(typeof(Program));

@@ -31,11 +31,18 @@ namespace Service.Services
             await _repository.DeleteItem(id);
         }
 
-        public Task<List<CategoriesDto>> GetAll()
+        //public Task<List<CategoriesDto>> GetAll()
+        //{
+        //    return mapper.Map<Task<List<Categories>>, Task<List<CategoriesDto>>>(_repository.GetAll());
+        //}
+        public async Task<List<CategoriesDto>> GetAll()
         {
-            return mapper.Map<Task<List<Categories>>, Task<List<CategoriesDto>>>(_repository.GetAll());
-        }
+            // 1. קודם כל מקבלים את הרשימה מה-Repository (מחכים שה-Task יסתיים)
+            var categories = await _repository.GetAll();
 
+            // 2. עכשיו כשיש לנו רשימה ביד, הופכים אותה ל-DTO
+            return mapper.Map<List<CategoriesDto>>(categories);
+        }
         public  async Task<CategoriesDto> GetById(int id)
         {
             return mapper.Map<Categories, CategoriesDto>(await _repository.GetById(id));

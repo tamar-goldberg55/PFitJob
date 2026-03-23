@@ -12,7 +12,7 @@ namespace Repository.DataRepositories
     public class CategoriesRepository : IRepository<Categories>
     {
         private readonly IContext context;
-        public CategoriesRepository()
+        public CategoriesRepository(IContext context)
         {
             this.context = context;
         }
@@ -41,9 +41,9 @@ namespace Repository.DataRepositories
 
         }
 
-        public  Task<List<Categories>> GetAll()
+        public async  Task<List<Categories>> GetAll()
         {
-            return context.Categories.ToListAsync();
+            return await context.Categories.ToListAsync();
         }
 
         public async Task<Categories> GetById(int id)
