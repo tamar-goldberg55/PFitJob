@@ -45,11 +45,15 @@ namespace Service.Services
             throw new NotImplementedException();
         }
 
-        public Task<List<EmployerDto>> GetAll()
+        //public Task<List<EmployerDto>> GetAll()
+        //{
+        //    return mapper.Map<Task<List<Employer>>, Task<List<EmployerDto>>>(_repository.GetAll());
+        //}
+        public async Task<List<EmployerDto>> GetAll()
         {
-            return mapper.Map<Task<List<Employer>>, Task<List<EmployerDto>>>(_repository.GetAll());
+            var employers = await _repository.GetAll(); // מחכים לנתונים מה-DB
+            return mapper.Map<List<EmployerDto>>(employers); // ממפים את הרשימה האמיתית
         }
-
         public async Task<EmployerDto> GetById(int id)
         {
             return mapper.Map<Employer, EmployerDto>(await _repository.GetById(id));

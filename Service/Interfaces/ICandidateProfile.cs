@@ -11,7 +11,7 @@ namespace Service.Interfaces
     {
         Task<JobListingsDto> GetMatchingJobs(int candidateId);//מחזירה את המשרה הכי תואמת
         Task<bool> UpdatePreferences(int candidateId, CandidateProfileDto preferences); //– עדכון הגדרות החיפוש.
-        Task CandidateTakesJob(int candidateId, int jobId);
+        Task CandidateTakesJob(int candidateId, int jobId);//לבדוק את זה לאחר עדכון המשרות
 
     }
 }
