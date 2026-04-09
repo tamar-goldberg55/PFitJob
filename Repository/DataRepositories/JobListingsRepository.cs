@@ -16,10 +16,21 @@ namespace Repository.DataRepositories
         {
             _context = context;
         }
+        //public async Task<JobListings> AddItem(JobListings item)
+        //{
+        //    await _context.JobListings.AddAsync(item);
+        //    _context.save();
+        //    return item;
+        //}
         public async Task<JobListings> AddItem(JobListings item)
         {
+            // הגנה: מוודאים ש-EF לא ינסה ליצור ישויות קיימות מחדש
+            // אנחנו מאפסים את אובייקטי הניווט כדי שישתמש רק ב-ForeignKey (ה-ID)
+            item.Category = null;
+            item.Employer = null;
+
             await _context.JobListings.AddAsync(item);
-            _context.save();
+            _context.save(); // ודאי שה-save אכן מבצע SaveChanges()
             return item;
         }
 
@@ -52,6 +63,8 @@ namespace Repository.DataRepositories
                 jobListing.Description = item.Description;
                 jobListing.IsCatch = item.IsCatch; // זה הסטטוס שרצית
                 jobListing.Payment = item.Payment;
+                jobListing.CategoryId = item.CategoryId;
+                jobListing.EmployerId = item.EmployerId;
 
                 // 3. שמירה מסונכרנת (אופציונלי להפוך ל-Async גם ב-Context)
                 _context.save();
