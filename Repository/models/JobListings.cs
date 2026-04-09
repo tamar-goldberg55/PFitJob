@@ -17,9 +17,10 @@ namespace Repository.models
         [ForeignKey("Employer")]
         public int EmployerId { get; set; } // FK למעסיק (מי פרסם)
         public Employer Employer { get; set; }
-        [ForeignKey("Category")]
+        
         public int CategoryId { get; set; } // FK לקטגוריה (סוג העבודה)
-        public Categories Category { get; set; }
+        [ForeignKey("CategoryId")] // מצביע על המשתנה שמעליו
+        public virtual Categories Category { get; set; }
         public elevel leveJob { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }

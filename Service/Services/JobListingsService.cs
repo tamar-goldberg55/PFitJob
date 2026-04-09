@@ -21,11 +21,22 @@ namespace Service.Services
             mapper= map;    
                 
         }
-        public async Task<JobListingsDto> AddItem(JobListingsDto item)
-        {
-            return mapper.Map<JobListings, JobListingsDto>(
+        //public async Task<JobListingsDto> AddItem(JobListingsDto item)
+        //{
+        //    return mapper.Map<JobListings, JobListingsDto>(
 
-            await _repository.AddItem(mapper.Map<JobListingsDto, JobListings>(item)));
+        //    await _repository.AddItem(mapper.Map<JobListingsDto, JobListings>(item)));
+        //}
+        public async Task<JobListingsDto> AddItem(JobListingsDto itemDto)
+        {
+            // 1. הפיכת ה-DTO לישות (כאן עוברים ה-CategoryId וה-EmployerId)
+            var jobEntity = mapper.Map<JobListings>(itemDto);
+
+            // 2. שליחה לרפוסיטורי (שם כבר הגדרנו ש-Category ו-Employer יהיו null כדי למנוע שגיאות)
+            var createdJob = await _repository.AddItem(jobEntity);
+
+            // 3. החזרת התוצאה כ-DTO
+            return mapper.Map<JobListingsDto>(createdJob);
         }
 
         public  async Task DeleteItem(int id)
