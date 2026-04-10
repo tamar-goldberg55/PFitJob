@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Repository;
 using Repository.DataRepositories;
 using Repository.Interfaces;
@@ -16,6 +17,15 @@ namespace WebApi
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+          //  / ---הגדרת המדיניות של CORS-- -
+          builder.Services.AddCors(options =>
+          {             options.AddDefaultPolicy(policy =>
+              {
+                  policy.AllowAnyOrigin()
+                    .AllowAnyHeader()
+                       .AllowAnyMethod();
+             });
+          });
 
             // Add services to the container.
             // הוספת ה-DbContext למערכת
@@ -58,6 +68,8 @@ namespace WebApi
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            // --- הפעלת ה-CORS (חייב להיות לפני Authorization) ---
+            app.UseCors();
 
             app.UseHttpsRedirection();
 
