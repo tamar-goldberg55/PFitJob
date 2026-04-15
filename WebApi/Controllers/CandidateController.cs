@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Repository.Interfaces;
 using Repository.models;
 using Service.Dto;
@@ -8,8 +9,10 @@ using Service.Interfaces;
 
 namespace WebApi.Controllers
 {
+    [Authorize(Roles = "Candidate")] // רק מי שיש לו Role של Candidate בטוקן יכול להיכנס
     [Route("api/[controller]")]
     [ApiController]
+ 
     public class CandidateController : ControllerBase
     {
         private readonly ICandidateProfile _candidateService;

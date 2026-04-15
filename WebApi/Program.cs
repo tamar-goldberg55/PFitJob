@@ -1,14 +1,12 @@
-
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Repository;
-using Repository.DataRepositories;
-using Repository.Interfaces;
+using Microsoft.IdentityModel.Tokens; // חובה להוסיף
+using Microsoft.AspNetCore.Authentication.JwtBearer; // חובה להוסיף
+using System.Text;
 using Repository.models;
 using Service.Interfaces;
 using Service.Services;
-
+using Repository.Interfaces;
+using Repository.DataRepositories;
 
 namespace WebApi
 {
@@ -17,69 +15,87 @@ namespace WebApi
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-          //  / ---הגדרת המדיניות של CORS-- -
-          builder.Services.AddCors(options =>
-          {             options.AddDefaultPolicy(policy =>
-              {
-                  policy.AllowAnyOrigin()
-                    .AllowAnyHeader()
-                       .AllowAnyMethod();
-             });
-          });
 
-            // Add services to the container.
-            // הוספת ה-DbContext למערכת
+            // 1. הגדרת CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
+            // 2. הגדרת Authentication (אימות) - זה החלק שחסר לך!
+            // וודאי שהמפתח כאן זהה בדיוק למפתח ב-TokenService
+            var key = Encoding.UTF8.GetBytes("YourSuperSecretKeyMustBeAtLeast32CharactersLong");
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = "YourIssuer", // זהה ל-TokenService
+                    ValidateAudience = true,
+                    ValidAudience = "YourAudience", // זהה ל-TokenService
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+            // 3. רישום שירותים (DI)
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
 
+            builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // רישום Services
             builder.Services.AddScoped<ITokenService, TokenService>();
-            builder.Services.AddScoped<ICandidateProfile, CandidateService>(); // <-- זו השורה החדשה
-            // רישום השירותים החדשים שהוספת
-            builder.Services.AddScoped<IJobListings, JobListingsService>(); // ודא שזה שם המחלקה המממשת
-            builder.Services.AddScoped<IMatch, MatchService>();     // ודא שזה שם המחלקה המממשת
+            builder.Services.AddScoped<ICandidateProfile, CandidateService>();
+            builder.Services.AddScoped<IJobListings, JobListingsService>();
+            builder.Services.AddScoped<IMatch, MatchService>();
             builder.Services.AddScoped<IUser, UserService>();
             builder.Services.AddScoped<ICategories, CategoryService>();
             builder.Services.AddScoped<IEmployer, EmployerService>();
 
-
-            // בנוסף, ודא ש-AutoMapper רשום (מכיוון שהוספת IMapper)
-            // builder.Services.AddAutoMapper(typeof(Program));
-            //builder.Services.AddAutoMapper(typeof(MyMapper));
             builder.Services.AddAutoMapper(typeof(Service.Services.MyMapper).Assembly);
 
-            // רישום ה-Repositories עבור כל מודל בנפרד
+            // רישום Repositories
             builder.Services.AddScoped<IRepository<User>, UserRepository>();
             builder.Services.AddScoped<IRepository<Employer>, EmployerRepository>();
             builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
             builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
             builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
             builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
-            //builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository.DataRepositories<>));
+
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
+            // 4. הגדרת ה-Pipeline (הסדר כאן קריטי!)
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-            // --- הפעלת ה-CORS (חייב להיות לפני Authorization) ---
-            app.UseCors();
 
+            app.UseCors(); // קודם כל CORS
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
-
+            app.UseAuthentication(); // 1. בדיקה מי המשתמש (חובה לפני Authorization)
+            app.UseAuthorization();  // 2. בדיקה מה מותר לו לעשות
 
             app.MapControllers();
-
             app.Run();
-           
         }
     }
 }

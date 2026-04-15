@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Service.Dto;
 using Service.Interfaces;
 
@@ -6,6 +7,7 @@ using Service.Interfaces;
 
 namespace WebApi.Controllers
 {
+    [Authorize] // מחייב שיהיה טוקן כלשהו (גם מועמד וגם מעסיק)
     [Route("api/[controller]")]
     [ApiController]
     public class EmployerController : ControllerBase
@@ -37,6 +39,7 @@ namespace WebApi.Controllers
 
         // GET api/Employer/5/jobs
         [HttpGet("{id}/jobs")]
+        [Authorize(Roles = "Employer")]
         public async Task<List<JobListingsDto>> GetJobs(int id)
         {
             return await _employerService.GetEmployerJobs(id);
@@ -51,6 +54,7 @@ namespace WebApi.Controllers
 
         // PUT api/Employer/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Employer")]
         public async Task Put(int id, [FromBody] EmployerDto employerDto)
         {
             await _employerService.UpdateItem(id, employerDto);
@@ -58,6 +62,7 @@ namespace WebApi.Controllers
 
         // DELETE api/Employer/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Employer")]
         public async Task Delete(int id)
         {
             await _employerService.DeleteItem(id);

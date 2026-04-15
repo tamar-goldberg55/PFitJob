@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization; // חובה להוסיף
+using Microsoft.AspNetCore.Mvc;
 using Service.Dto;
 using Service.Interfaces;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebApi.Controllers
 {
@@ -12,13 +11,13 @@ namespace WebApi.Controllers
     {
         private readonly IJobListings _jobListingsService;
 
-        // הזרקת השירות (Dependency Injection)
         public JobListingController(IJobListings jobListingsService)
         {
             _jobListingsService = jobListingsService;
         }
 
         // GET: api/JobListings
+        // פתוח לכולם - אנחנו רוצים שגם מי שלא מחובר יוכל לראות משרות
         [HttpGet]
         public async Task<List<JobListingsDto>> Get()
         {
@@ -26,6 +25,7 @@ namespace WebApi.Controllers
         }
 
         // GET api/JobListings/5
+        // פתוח לכולם
         [HttpGet("{id}")]
         public async Task<JobListingsDto> Get(int id)
         {
@@ -33,6 +33,8 @@ namespace WebApi.Controllers
         }
 
         // POST api/JobListings
+        // רק מעסיק יכול לפרסם משרה חדשה
+        [Authorize(Roles = "Employer")]
         [HttpPost]
         public async Task<JobListingsDto> Post([FromBody] JobListingsDto jobDto)
         {
@@ -40,6 +42,8 @@ namespace WebApi.Controllers
         }
 
         // PUT api/JobListings/5
+        // רק מעסיק יכול לעדכן משרה
+        [Authorize(Roles = "Employer")]
         [HttpPut("{id}")]
         public async Task Put(int id, [FromBody] JobListingsDto jobDto)
         {
@@ -47,13 +51,16 @@ namespace WebApi.Controllers
         }
 
         // DELETE api/JobListings/5
+        // רק מעסיק יכול למחוק משרה
+        [Authorize(Roles = "Employer")]
         [HttpDelete("{id}")]
         public async Task Delete(int id)
         {
             await _jobListingsService.DeleteItem(id);
         }
 
-        // בונוס: פונקציה לעדכון סטטוס המשרה (Toggle) כפי שהגדרת בסרביס
+        // רק מעסיק יכול לשנות סטטוס משרה
+        [Authorize(Roles = "Employer")]
         [HttpPatch("{id}/status")]
         public async Task<bool> ToggleStatus(int id, [FromQuery] bool isActive)
         {
@@ -61,4 +68,3 @@ namespace WebApi.Controllers
         }
     }
 }
-

@@ -15,21 +15,25 @@ namespace Service.Services
     {
         public string GenerateToken(User user)
         {
-            // המפתח חייב להיות זהה לזה שמוגדר ב-Program.cs בהגדרות ה-JWT
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("YourSuperSecretKeyMustBeAtLeast32CharactersLong"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var claims = new[]
+            // ה-Claims הם המידע ש"מוצפן" בתוך הטוקן
+            var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.NameId, user.Id.ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email) // אם יש לך שדה אימייל במודל
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                
+                // השורה הקריטית: מוסיפה את סוג המשתמש לתוך הטוקן
+                // וודאי שהשדה במודל שלך נקרא UserType או Role
+                new Claim(ClaimTypes.Role, user.UserType.ToString())
             };
 
             var token = new JwtSecurityToken(
                 issuer: "YourIssuer",
                 audience: "YourAudience",
                 claims: claims,
-                expires: DateTime.Now.AddDays(1), // תוקף ליום אחד
+                expires: DateTime.Now.AddDays(1),
                 signingCredentials: creds
             );
 
@@ -37,4 +41,3 @@ namespace Service.Services
         }
     }
 }
-
