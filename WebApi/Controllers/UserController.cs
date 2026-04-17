@@ -20,14 +20,14 @@ namespace WebApi.Controllers
 
         // הרשמה כמתמודד (מועמד)
         [HttpPost("register/candidate")]
-        public Task<string> RegisterCandidate([FromBody] UserDto userDto, string password)
+        public Task<string> RegisterCandidate([FromBody] UserDto userDto, [FromQuery]  string password)
         {
             return _userService.RegisterCandidateAsync(userDto, password);
         }
 
         // הרשמה כמעסיק
         [HttpPost("register/employer")]
-        public Task<string> RegisterEmployer([FromBody] UserDto userDto, string password)
+        public Task<string> RegisterEmployer([FromBody] UserDto userDto, [FromQuery] string password)
         {
             return _userService.RegisterEmployerAsync(userDto, password);
         }
@@ -39,7 +39,7 @@ namespace WebApi.Controllers
         //    return _userService.LoginAsync(email, password);
         //}
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(string email, string password)
+        public async Task<ActionResult<string>> Login(string email, [FromQuery] string password)
         {
             // חשוב להשתמש ב-await כי הפונקציה ב-Service היא async
             var token = await _userService.LoginAsync(email, password);
