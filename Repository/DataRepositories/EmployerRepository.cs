@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Repository.DataRepositories
 {
-    public class EmployerRepository : IRepository<Employer>
+    public class EmployerRepository : IRepositoryEmployer
 
     {
         private readonly IContext _context;
@@ -44,7 +44,12 @@ namespace Repository.DataRepositories
                  .Include(e => e.MyJobs) // שורה קריטית!
                     .FirstOrDefaultAsync(e => e.Id == id);
         }
-      
+        public async Task<Employer> GetByUserId(int UserId)
+        {
+            return await _context.Employers
+                            .Include(e => e.MyJobs) // שורה קריטית!
+                               .FirstOrDefaultAsync(e => e.UserId == UserId);
+        }
 
         public async Task UpdateItem(int id, Employer item)
         {
@@ -53,5 +58,7 @@ namespace Repository.DataRepositories
             employee.status = item.status;
             _context.save();
         }
+
+      
     }
 }

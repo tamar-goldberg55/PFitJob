@@ -14,14 +14,14 @@ namespace Service.Services
     {
         private readonly IRepository<User> _userRepository;
         private readonly IRepository<CandidateProfiles> _candidateRepository;
-        private readonly IRepository<Employer> _employerRepository;
+        private readonly IRepositoryEmployer _employerRepository;
         private readonly IMapper _mapper;
         private readonly ITokenService _tokenService;
 
         public UserService(
             IRepository<User> userRepository,
             IRepository<CandidateProfiles> candidateRepository,
-            IRepository<Employer> employerRepository,
+            IRepositoryEmployer employerRepository,
             IMapper map,
             ITokenService tokenService)
         {

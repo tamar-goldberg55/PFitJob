@@ -14,9 +14,9 @@ namespace Service.Services
 {
     public class EmployerService:IEmployer
     {
-        private readonly IRepository<Employer> _repository;
+        private readonly IRepositoryEmployer _repository;
         private readonly IMapper mapper;
-        public EmployerService(IRepository<Employer> repository, IMapper map)
+        public EmployerService(IRepositoryEmployer repository, IMapper map)
         {
                 _repository = repository;
                    mapper=map;
@@ -24,7 +24,7 @@ namespace Service.Services
         public async Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
         {
             // משתמשים ב-_repository (עם קו תחתון) שהגדרת ב-Constructor
-            var employer = await _repository.GetById(employerId);
+            var employer = await _repository.GetByUserId(employerId);
 
             // אם המעסיק לא קיים או שרשימת המשרות ריקה
             if (employer == null || employer.MyJobs == null)

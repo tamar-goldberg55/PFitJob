@@ -73,7 +73,7 @@ namespace WebApi
 
             // רישום Repositories
             builder.Services.AddScoped<IRepository<User>, UserRepository>();
-            builder.Services.AddScoped<IRepository<Employer>, EmployerRepository>();
+            builder.Services.AddScoped<IRepositoryEmployer, EmployerRepository>();
             builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
             builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
             builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
