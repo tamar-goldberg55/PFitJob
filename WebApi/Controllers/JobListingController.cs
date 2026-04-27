@@ -23,6 +23,11 @@ namespace WebApi.Controllers
         {
             return await _jobListingsService.GetAll();
         }
+        [HttpGet("getByEmp{id}")]
+        public async Task<List<JobListingsDto>> GetByEmployer(int id)
+        {
+            return await _jobListingsService.GetJobByEmployer(id);
+        }
 
         // GET api/JobListings/5
         // פתוח לכולם
@@ -34,7 +39,7 @@ namespace WebApi.Controllers
 
         // POST api/JobListings
         // רק מעסיק יכול לפרסם משרה חדשה
-        [Authorize(Roles = "Employer")]
+        //[Authorize(Roles = "Employer")]
         [HttpPost]
         public async Task<JobListingsDto> Post([FromBody] JobListingsDto jobDto)
         {
@@ -43,7 +48,7 @@ namespace WebApi.Controllers
 
         // PUT api/JobListings/5
         // רק מעסיק יכול לעדכן משרה
-        [Authorize(Roles = "Employer")]
+        //[Authorize(Roles = "Employer")]
         [HttpPut("{id}")]
         public async Task Put(int id, [FromBody] JobListingsDto jobDto)
         {
@@ -52,7 +57,7 @@ namespace WebApi.Controllers
 
         // DELETE api/JobListings/5
         // רק מעסיק יכול למחוק משרה
-        [Authorize(Roles = "Employer")]
+        //[Authorize(Roles = "Employer")]
         [HttpDelete("{id}")]
         public async Task Delete(int id)
         {
@@ -60,7 +65,7 @@ namespace WebApi.Controllers
         }
 
         // רק מעסיק יכול לשנות סטטוס משרה
-        [Authorize(Roles = "Employer")]
+        //[Authorize(Roles = "Employer")]
         [HttpPatch("{id}/status")]
         public async Task<bool> ToggleStatus(int id, [FromQuery] bool isActive)
         {

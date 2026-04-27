@@ -49,7 +49,12 @@ namespace Service.Services
             return mapper.Map<List<JobListings>, List<JobListingsDto>>(await
                     _repository.GetAll());
         }
-
+        public async Task<List<JobListingsDto>> GetJobByEmployer(int empId)
+        {
+            var jobs = await _repository.GetAll();
+            var employerJobs = jobs.Where(job => job.EmployerId == empId).ToList();
+            return mapper.Map<List<JobListings>, List<JobListingsDto>>(employerJobs);
+        }
         public async Task<JobListingsDto> GetById(int id)
         {
             return mapper.Map<JobListings, JobListingsDto>(await _repository.GetById(id));
