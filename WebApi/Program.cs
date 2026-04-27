@@ -59,6 +59,7 @@ namespace WebApi
                 };
 
             });
+            int num2=2
             int num = 1;
             // 3. רישום שירותים (DI)
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>

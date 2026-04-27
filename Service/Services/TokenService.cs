@@ -20,6 +20,7 @@ namespace Service.Services
         {
             _config = config;
             int num = 1;
+            int num2=2;
         }
         public string GenerateToken(User user)
         {
