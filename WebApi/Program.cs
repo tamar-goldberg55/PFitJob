@@ -59,7 +59,7 @@ namespace WebApi
                 };
 
             });
-
+            int num = 1;
             // 3. רישום שירותים (DI)
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

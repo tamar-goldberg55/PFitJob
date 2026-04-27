@@ -19,6 +19,7 @@ namespace Service.Services
         public TokenService(IConfiguration config)
         {
             _config = config;
+            int num = 1;
         }
         public string GenerateToken(User user)
         {
