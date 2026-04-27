@@ -21,24 +21,33 @@ namespace Service.Services
                 _repository = repository;
                    mapper=map;
         }
-        public async Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
-        {
-            // משתמשים ב-_repository (עם קו תחתון) שהגדרת ב-Constructor
-            var employer = await _repository.GetByUserId(employerId);
+        //public async Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
+        //{
+        //    System.Diagnostics.Debugger.Break(); // זה יכריח את ה-Visual Studio לעצור פה!
+        //    var employer = await _repository.GetByUserId(employerId);
 
-            // אם המעסיק לא קיים או שרשימת המשרות ריקה
+        //    // אם המעסיק לא קיים או שרשימת המשרות ריקה
+        //    if (employer == null || employer.MyJobs == null)
+        //    {
+        //        return new List<JobListingsDto>();
+        //    }
+
+        //    // משתמשים ב-mapper (שהגדרת כ-mapper) כדי להמיר את המשרות
+        //    // אני מניח שיש לך פונקציית מיפוי ב-mapper או שאת משתמשת ב-mapper.Map
+        //    var jobsDto = employer.MyJobs
+        //        .Select(job => mapper.Map<JobListings, JobListingsDto>(job))
+        //        .ToList();
+
+        //    return jobsDto;
+        //}
+        public async Task<List<JobListingsDto>> GetEmployerJobs(int userId)
+        {
+            var employer = await _repository.GetByUserId(userId);
             if (employer == null || employer.MyJobs == null)
             {
                 return new List<JobListingsDto>();
             }
-
-            // משתמשים ב-mapper (שהגדרת כ-mapper) כדי להמיר את המשרות
-            // אני מניח שיש לך פונקציית מיפוי ב-mapper או שאת משתמשת ב-mapper.Map
-            var jobsDto = employer.MyJobs
-                .Select(job => mapper.Map<JobListings, JobListingsDto>(job))
-                .ToList();
-
-            return jobsDto;
+            return mapper.Map<List<JobListingsDto>>(employer.MyJobs);
         }
         public Task<EmployerDto> GetEmployerStats(int employerId)
         {

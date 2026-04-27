@@ -10,7 +10,7 @@ using Service.Interfaces;
 namespace WebApi.Controllers
 {
     [Authorize(Roles = "Candidate")] // רק מי שיש לו Role של Candidate בטוקן יכול להיכנס
-    [Route("api/[controller]")]
+    [Route("api/Candidate")]
     [ApiController]
  
     public class CandidateController : ControllerBase
@@ -78,6 +78,33 @@ namespace WebApi.Controllers
         public Task TakeJob(int id, int jobId)
         {
             return _candidateService.CandidateTakesJob(id, jobId);
+        }
+
+        [Authorize] // חשוב מאוד: מוודא שרק מי שיש לו טוקן יכול להיכנס
+        [HttpGet("my-profile")]
+        public async Task<ActionResult<CandidateProfileDto>> GetMyProfile()
+        {
+            // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן
+            // השתמשי ב-NameIdentifier כי זה הסטנדרט שבו נשמר ה-ID בדרך כלל
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                return Unauthorized("לא נמצא מזהה משתמש בטוקן");
+            }
+
+            // 2. המרה של ה-ID למספר (int)
+            if (!int.TryParse(userIdClaim, out int candidateId))
+            {
+                return BadRequest("מזהה משתמש לא תקין");
+            }
+
+            // 3. שליפת הפרופיל האמיתי מהשירות
+            var profile = await _candidateService.GetById(candidateId);
+
+            if (profile == null) return NotFound("לא נמצא פרופיל למשתמש המחובר");
+
+            return Ok(profile);
         }
     }
 }

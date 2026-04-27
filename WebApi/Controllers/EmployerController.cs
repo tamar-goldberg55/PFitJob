@@ -7,8 +7,8 @@ using Service.Interfaces;
 
 namespace WebApi.Controllers
 {
-    [Authorize] // מחייב שיהיה טוקן כלשהו (גם מועמד וגם מעסיק)
-    [Route("api/[controller]")]
+ // מחייב שיהיה טוקן כלשהו (גם מועמד וגם מעסיק)
+    [Route("api/Employer")]
     [ApiController]
     public class EmployerController : ControllerBase
     {
@@ -38,13 +38,49 @@ namespace WebApi.Controllers
         }
 
         // GET api/Employer/5/jobs
-        [HttpGet("{id}/jobs")]
-        [Authorize(Roles = "Employer")]
-        public async Task<List<JobListingsDto>> GetJobs(int id)
-        {
-            return await _employerService.GetEmployerJobs(id);
-        }
+        //[HttpGet("{id}/jobs")]
+        //[Authorize(Roles = "Employer")]
+        //public async Task<List<JobListingsDto>> GetJobs(int id)
+        //{
 
+        //    return await _employerService.GetEmployerJobs(id);
+        //}
+        // שנה מ-AllowAnonymous ל-Authorize כדי שהטוקן ייקרא
+        //[HttpGet("{id}/jobs")]
+        //public async Task<ActionResult> GetJobs(int id)
+        //{
+        //    Console.WriteLine($"DEBUG: Received ID from frontend is: {id}");
+        //    // 1. חילוץ ה-ID מהטוקן
+        //    var userIdFromToken = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        //    // 2. בדיקה לוגית - האם זה המשתמש הנכון?
+        //    if (userIdFromToken != id.ToString())
+        //    {
+        //        // מחזיר סטטוס 403 (Forbidden) עם ההודעה שלך כטקסט
+        //        return StatusCode(403, "אין לך הרשאה לצפות במשרות של מעסיק אחר");
+        //    }
+
+        //    var jobs = await _employerService.GetEmployerJobs(id);
+        //    return Ok(jobs);
+        //}
+        [HttpGet("{id}/jobs")]
+        public async Task<ActionResult> GetJobs(int id)
+        {
+            try
+            {
+                var userIdFromToken = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userIdFromToken != id.ToString())
+                {
+                    return StatusCode(403, "אין לך הרשאה לצ במשרות של מעסיק אחר");
+                }
+                var jobs = await _employerService.GetEmployerJobs(id);
+                return Ok(jobs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"שגיאה בטעינת משרות: {ex.Message}");
+            }
+        }
         // POST api/Employer
         [HttpPost]
         public async Task<EmployerDto> Post([FromBody] EmployerDto employerDto)
@@ -61,6 +97,7 @@ namespace WebApi.Controllers
         }
 
         // DELETE api/Employer/5
+
         [HttpDelete("{id}")]
         [Authorize(Roles = "Employer")]
         public async Task Delete(int id)

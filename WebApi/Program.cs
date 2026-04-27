@@ -1,12 +1,14 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer; // חובה להוסיף
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens; // חובה להוסיף
-using Microsoft.AspNetCore.Authentication.JwtBearer; // חובה להוסיף
-using System.Text;
+using Microsoft.OpenApi.Models;
+using Repository.DataRepositories;
+using Repository.Interfaces;
 using Repository.models;
 using Service.Interfaces;
 using Service.Services;
-using Repository.Interfaces;
-using Repository.DataRepositories;
+using System.Text;
 
 namespace WebApi
 {
@@ -15,7 +17,11 @@ namespace WebApi
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var jwtSection = builder.Configuration.GetSection("Jwt");
+            var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("jwt:Key is not configured in appsettings.json");
 
+            var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("jwt:Issuer is not configured in appsettings.json");
+            var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("jwt:Audience is not configured in appsettings.json");
             // 1. הגדרת CORS
             builder.Services.AddCors(options =>
             {
@@ -38,17 +44,20 @@ namespace WebApi
             })
             .AddJwtBearer(options =>
             {
-                options.TokenValidationParameters = new TokenValidationParameters
+                options.RequireHttpsMetadata = true;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                     ValidateIssuer = true,
-                    ValidIssuer = "YourIssuer", // זהה ל-TokenService
+                    ValidIssuer = jwtIssuer,// זהה ל-TokenService
                     ValidateAudience = true,
-                    ValidAudience = "YourAudience", // זהה ל-TokenService
+                    ValidAudience = jwtAudience, // זהה ל-TokenService
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
+
             });
 
             // 3. רישום שירותים (DI)
@@ -58,7 +67,38 @@ namespace WebApi
             builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApplication1 API", Version = "v1" });
+
+                var bearerScheme = new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Description = "Enter 'Bearer' [space] and then your valid JWT token.\r\n\r\nExample: \"Bearer eyJhb...\"",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                };
+
+                options.AddSecurityDefinition("Bearer", bearerScheme);
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+            });
 
             // רישום Services
             builder.Services.AddScoped<ITokenService, TokenService>();

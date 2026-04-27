@@ -44,13 +44,12 @@ namespace Repository.DataRepositories
                  .Include(e => e.MyJobs) // שורה קריטית!
                     .FirstOrDefaultAsync(e => e.Id == id);
         }
-        public async Task<Employer> GetByUserId(int UserId)
+        public async Task<Employer> GetByUserId(int userId)
         {
             return await _context.Employers
-                            .Include(e => e.MyJobs) // שורה קריטית!
-                               .FirstOrDefaultAsync(e => e.UserId == UserId);
+                .Include(e => e.MyJobs)
+                .FirstOrDefaultAsync(e => e.UserId == userId);
         }
-
         public async Task UpdateItem(int id, Employer item)
         {
             var employee = await GetById(id);
