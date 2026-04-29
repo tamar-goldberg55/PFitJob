@@ -9,7 +9,7 @@ using Service.Interfaces;
 
 namespace WebApi.Controllers
 {
-    [Authorize(Roles = "Candidate")] // רק מי שיש לו Role של Candidate בטוקן יכול להיכנס
+    [Authorize] // רק מי שיש לו טוקן תקין יכול להיכנס (ללא בדיקת Role)
     [Route("api/Candidate")]
     [ApiController]
  
@@ -39,10 +39,40 @@ namespace WebApi.Controllers
         }
 
         // יצירת מועמד חדש
-        [HttpPost]
-        public Task<CandidateProfileDto> Post([FromBody] CandidateProfileDto candidateDto)
+        [HttpPost("profile")]
+        public async Task<ActionResult<CandidateProfileDto>> Post([FromBody] CandidateProfileDto candidateDto)
         {
-            return _candidateService.AddItem(candidateDto);
+            // חילוץ ה-ID של המשתמש מה-Claims של הטוקן - ננסה כמה שמות אפשריים
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("UserId")?.Value
+                              ?? User.FindFirst("id")?.Value
+                              ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                // לצורך דיבאג - נדפיס את כל ה-claims שקיימים
+                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+                return BadRequest($"לא נמצא מזהה משתמש בטוקן. Claims קיימים: {string.Join(", ", allClaims)}");
+            }
+
+            // המרה של ה-ID למספר (int)
+            if (!int.TryParse(userIdClaim, out int candidateId))
+            {
+                return BadRequest("מזהה משתמש לא תקין");
+            }
+
+            // הגדרת ה-ID של המשתמש ב-DTO
+            candidateDto.Id = candidateId;
+
+            try
+            {
+                var result = await _candidateService.AddItem(candidateDto);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"שגיאה ביצירת פרופיל: {ex.Message}");
+            }
         }
 
         // עדכון פרטי מועמד
@@ -84,13 +114,17 @@ namespace WebApi.Controllers
         [HttpGet("my-profile")]
         public async Task<ActionResult<CandidateProfileDto>> GetMyProfile()
         {
-            // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן
-            // השתמשי ב-NameIdentifier כי זה הסטנדרט שבו נשמר ה-ID בדרך כלל
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן - ננסה כמה שמות אפשריים
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("UserId")?.Value
+                              ?? User.FindFirst("id")?.Value
+                              ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim))
             {
-                return Unauthorized("לא נמצא מזהה משתמש בטוקן");
+                // לצורך דיבאג - נדפיס את כל ה-claims שקיימים
+                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+                return BadRequest($"לא נמצא מזהה משתמש בטוקן. Claims קיימים: {string.Join(", ", allClaims)}");
             }
 
             // 2. המרה של ה-ID למספר (int)

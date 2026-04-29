@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Repository.models;
 
 namespace Service.Dto
 {
@@ -32,5 +33,8 @@ namespace Service.Dto
         public bool IsCatch { get; set; }
         public bool IsRemote { get; set; }
         public bool IsJobWithPepole { get; set; }
+        public elevel leveJob { get; set; } = Repository.models.elevel.Easy; // ערך ברירת מחדל
+
+
     }
 }

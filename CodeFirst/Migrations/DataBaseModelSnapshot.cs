@@ -34,6 +34,7 @@ namespace CodeFirst.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("City")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsRemoteOnly")

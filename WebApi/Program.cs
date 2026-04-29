@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer; // חובה להוסיף
-using Microsoft.CodeAnalysis.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens; // חובה להוסיף
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Repository.DataRepositories;
 using Repository.Interfaces;
@@ -19,10 +18,10 @@ namespace WebApi
             var builder = WebApplication.CreateBuilder(args);
             var jwtSection = builder.Configuration.GetSection("Jwt");
             var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("jwt:Key is not configured in appsettings.json");
-
             var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("jwt:Issuer is not configured in appsettings.json");
             var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("jwt:Audience is not configured in appsettings.json");
-            // 1. הגדרת CORS
+
+            // CORS Configuration
             builder.Services.AddCors(options =>
             {
                 options.AddDefaultPolicy(policy =>
@@ -33,9 +32,8 @@ namespace WebApi
                 });
             });
 
-            // 2. הגדרת Authentication (אימות) - זה החלק שחסר לך!
-            // וודאי שהמפתח כאן זהה בדיוק למפתח ב-TokenService
-            var key = Encoding.UTF8.GetBytes("YourSuperSecretKeyMustBeAtLeast32CharactersLong");
+            // Authentication Configuration
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
             builder.Services.AddAuthentication(options =>
             {
@@ -51,16 +49,15 @@ namespace WebApi
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                     ValidateIssuer = true,
-                    ValidIssuer = jwtIssuer,// זהה ל-TokenService
+                    ValidIssuer = jwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtAudience, // זהה ל-TokenService
+                    ValidAudience = jwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
-
             });
-          
-            // 3. רישום שירותים (DI)
+
+            // Database Configuration
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -100,7 +97,7 @@ namespace WebApi
     });
             });
 
-            // רישום Services
+            // Services
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ICandidateProfile, CandidateService>();
             builder.Services.AddScoped<IJobListings, JobListingsService>();
@@ -111,7 +108,7 @@ namespace WebApi
 
             builder.Services.AddAutoMapper(typeof(Service.Services.MyMapper).Assembly);
 
-            // רישום Repositories
+            // Repositories
             builder.Services.AddScoped<IRepository<User>, UserRepository>();
             builder.Services.AddScoped<IRepositoryEmployer, EmployerRepository>();
             builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
@@ -121,18 +118,18 @@ namespace WebApi
 
             var app = builder.Build();
 
-            // 4. הגדרת ה-Pipeline (הסדר כאן קריטי!)
+            // Pipeline Configuration
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(); // קודם כל CORS
+            app.UseCors(); // Enable CORS
             app.UseHttpsRedirection();
 
-            app.UseAuthentication(); // 1. בדיקה מי המשתמש (חובה לפני Authorization)
-            app.UseAuthorization();  // 2. בדיקה מה מותר לו לעשות
+            app.UseAuthentication();
+            app.UseAuthorization();
 
             app.MapControllers();
             app.Run();

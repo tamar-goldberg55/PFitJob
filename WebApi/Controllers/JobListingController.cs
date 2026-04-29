@@ -23,7 +23,7 @@ namespace WebApi.Controllers
         {
             return await _jobListingsService.GetAll();
         }
-        [HttpGet("getByEmp{id}")]
+        [HttpGet("getByEmp/{id}")]
         public async Task<List<JobListingsDto>> GetByEmployer(int id)
         {
             return await _jobListingsService.GetJobByEmployer(id);

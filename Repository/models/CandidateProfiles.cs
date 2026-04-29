@@ -25,7 +25,8 @@ namespace Repository.models
         [ForeignKey("User")]
         public int UserId { get; set; } // FK למשתמש
         public User ?User { get; set; }
-        public string ?City { get; set; } // עיר מגורים
+        [Required(ErrorMessage = "שדה עיר הוא חובה")]
+        public string City { get; set; } // עיר מגורים
         public int ?MaxDistance { get; set; } // מרחק מקסימלי בק"מ
         public decimal ?MinHourlyRate { get; set; } // שכר מינימום מבוקש
         public bool activity { get; set; } = true;
