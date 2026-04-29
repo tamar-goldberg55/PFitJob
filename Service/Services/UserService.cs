@@ -87,7 +87,7 @@ namespace Service.Services
             }
             else if (role == UserRole.Employer)
             {
-                await _employerRepository.AddItem(new Employer { UserId = addedUser.Id });
+                await _employerRepository.AddItem(new Employer { UserId = addedUser.Id, CompanyName = "חברה חדשה" });
             }
 
             return _tokenService.GenerateToken(addedUser);
