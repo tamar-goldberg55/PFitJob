@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Service.Dto;
 using Service.Interfaces;
 using Repository.models;
@@ -55,6 +55,45 @@ namespace WebApi.Controllers
             }
         }
 
+        // הרשמה כללית - תומך במועמדים ומעסיקים
+        [HttpPost("register")]
+        public async Task<ActionResult<object>> Register([FromBody] RegisterDto registerDto)
+        {
+            try
+            {
+                // יצירת UserDto מה-RegisterDto
+                var userDto = new UserDto
+                {
+                    Email = registerDto.Email,
+                    UserType = registerDto.UserType.ToString(),
+                    IsEnable = true
+                };
+
+                string token;
+                
+                if (registerDto.UserType.ToString().ToLower() == "employer")
+                {
+                    token = await _userService.RegisterEmployerAsync(userDto, registerDto.Password);
+                }
+                else
+                {
+                    // ברירת מחדל - רישום כמועמד
+                    token = await _userService.RegisterCandidateAsync(userDto, registerDto.Password);
+                }
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest("ההרשמה נכשלה - ייתכן שהמייל כבר קיים במערכת");
+                }
+
+                return Ok(new { token = token, user = userDto });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"שגיאה בהרשמה: {ex.Message}");
+            }
+        }
+
         // קבלת כל המשתמשים
         [HttpGet]
         public async Task<List<UserDto>> GetAll()
@@ -62,7 +101,7 @@ namespace WebApi.Controllers
             return await _userService.GetAll();
         }
 
-        // קבלת משתמש לפי ID
+        // קבלת משתמש לפי ID - חייב להיות אחרון כדי לא להתנגש עם נתיבים ספציפיים
         [HttpGet("{id}")]
         public Task<UserDto> GetById(int id)
         {
