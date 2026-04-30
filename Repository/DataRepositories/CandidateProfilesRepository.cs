@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Repository.DataRepositories
 {
-    public class CandidateProfilesRepository : IRepository<CandidateProfiles>
+    public class CandidateProfilesRepository : IRepository<CandidateProfiles>, IRepositoryCandidateProfiles
     {
         private readonly IContext _context;
         public CandidateProfilesRepository(IContext context)
@@ -39,6 +39,14 @@ namespace Repository.DataRepositories
             return  _context.CandidateProfiles.FirstOrDefaultAsync(x => x.Id == id);
         }
 
+        public async Task<CandidateProfiles> GetByUserId(int userId)
+        {
+            Console.WriteLine($"DEBUG REPO: Searching for UserId={userId}");
+            var result = await _context.CandidateProfiles.FirstOrDefaultAsync(x => x.UserId == userId);
+            Console.WriteLine($"DEBUG REPO: Found: {(result == null ? "NULL" : $"Id={result.Id}")}");
+            return result;
+        }
+
         public  async Task UpdateItem(int id, CandidateProfiles item)
         {
             //var CandidateProfile = await GetById(id);
@@ -56,6 +64,7 @@ namespace Repository.DataRepositories
                 existingProfile.level = item.level;
                 existingProfile.IsRemoteOnly = item.IsRemoteOnly;
                 existingProfile.Withpepole = item.Withpepole;
+                existingProfile.CategoryId = item.CategoryId;
 
                 // הערה: בדרך כלל לא מעדכנים את ה-UserId או ה-Id עצמו
 

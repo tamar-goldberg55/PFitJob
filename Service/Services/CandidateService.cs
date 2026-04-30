@@ -14,11 +14,11 @@ namespace Service.Services
 {
     public class CandidateService:ICandidateProfile
     {
-        private readonly IRepository<CandidateProfiles> _repository;
+        private readonly IRepositoryCandidateProfiles _repository;
         private readonly IMapper mapper;
         private readonly IJobListings _jobService; // הוספנו משתנה חדש
         private readonly IMatch _matchService; // הזרקה של שירות השידוכים
-        public CandidateService(IRepository<CandidateProfiles> repository, IMapper map, IJobListings jobService, IMatch matchService)
+        public CandidateService(IRepositoryCandidateProfiles repository, IMapper map, IJobListings jobService, IMatch matchService)
         {
             _repository = repository;
             mapper = map;
@@ -64,6 +64,13 @@ namespace Service.Services
               return mapper.Map<CandidateProfiles, CandidateProfileDto>(await _repository.GetById(id));
         }
 
+        public async Task<CandidateProfileDto> GetByUserId(int userId)
+        {
+            var profile = await _repository.GetByUserId(userId);
+            if (profile == null) return null;
+            return mapper.Map<CandidateProfiles, CandidateProfileDto>(profile);
+        }
+
         public async Task<JobListingsDto> GetMatchingJobs(int candidateId)
         {
             // אנחנו קוראים לפונקציה שבנינו קודם ב-MatchService
@@ -90,8 +97,12 @@ namespace Service.Services
       
         public async Task<bool> UpdatePreferences(int candidateId, CandidateProfileDto preferences)
         {
-            // 1. שליפת המועמד הקיים
-            CandidateProfiles can = await _repository.GetById(candidateId);
+            Console.WriteLine($"DEBUG: UpdatePreferences called with candidateId={candidateId}");
+            
+            // 1. שליפת המועמד לפי UserId (לא לפי Id של הפרופיל)
+            CandidateProfiles can = await _repository.GetByUserId(candidateId);
+            
+            Console.WriteLine($"DEBUG: GetByUserId returned: {(can == null ? "NULL" : $"ProfileId={can.Id}, UserId={can.UserId}")}");
 
             if (can == null) return false;
 
@@ -103,9 +114,10 @@ namespace Service.Services
             can.level = preferences.Level;
             can.MinHourlyRate = preferences.MinHourlyRate;
             can.Withpepole = preferences.WithPeople;
+            can.CategoryId = preferences.CategoryId;
 
-            // 3. עדכון בבסיס הנתונים (שימוש ב-UpdateItem שהגדרנו)
-            await _repository.UpdateItem(candidateId, can);
+            // 3. עדכון בבסיס הנתונים - משתמשים ב-Id האמיתי של הפרופיל
+            await _repository.UpdateItem(can.Id, can);
 
             return true;
         }

@@ -115,6 +115,7 @@ namespace WebApi
             builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
             builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
             builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
+            builder.Services.AddScoped<IRepositoryCandidateProfiles, CandidateProfilesRepository>();
 
             var app = builder.Build();
 

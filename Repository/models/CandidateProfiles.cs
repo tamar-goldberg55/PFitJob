@@ -20,7 +20,7 @@ namespace Repository.models
         [Key]
         public int Id { get; set; }
         [ForeignKey("Category")]
-        public int ?CategoryId { get; set; } // המזהה של הקטגוריה (למשל: 1 עבור תכנות)
+        public int CategoryId { get; set; } = 3; // ברירת מחדל: קטגוריה 3
         public Categories ?Category { get; set; } // האובייקט המלא של הקטגוריה
         [ForeignKey("User")]
         public int UserId { get; set; } // FK למשתמש

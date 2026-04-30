@@ -61,17 +61,22 @@ namespace WebApi.Controllers
                 return BadRequest("מזהה משתמש לא תקין");
             }
 
+            Console.WriteLine($"DEBUG CTRL: Extracted UserId from token: {candidateId}");
+
             // הגדרת ה-ID של המשתמש ב-DTO
             candidateDto.Id = candidateId;
 
             try
             {
-                var result = await _candidateService.AddItem(candidateDto);
-                return Ok(result);
+                var result = await _candidateService.UpdatePreferences(candidateId, candidateDto);
+                if (result)
+                    return Ok(candidateDto);
+                else
+                    return BadRequest("לא נמצא פרופיל לעדכון");
             }
             catch (Exception ex)
             {
-                return BadRequest($"שגיאה ביצירת פרופיל: {ex.Message}");
+                return BadRequest($"שגיאה בעדכון פרופיל: {ex.Message}");
             }
         }
 
@@ -133,8 +138,8 @@ namespace WebApi.Controllers
                 return BadRequest("מזהה משתמש לא תקין");
             }
 
-            // 3. שליפת הפרופיל האמיתי מהשירות
-            var profile = await _candidateService.GetById(candidateId);
+            // 3. שליפת הפרופיל לפי UserId (לא לפי Id של הפרופיל)
+            var profile = await _candidateService.GetByUserId(candidateId);
 
             if (profile == null) return NotFound("לא נמצא פרופיל למשתמש המחובר");
 

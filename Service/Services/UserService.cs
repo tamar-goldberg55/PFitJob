@@ -83,7 +83,7 @@ namespace Service.Services
 
             if (role == UserRole.Candidate)
             {
-                await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id });
+                await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id, CategoryId = 3, City = "לא צוין", MaxDistance = 50, MinHourlyRate = 0 });
             }
             else if (role == UserRole.Employer)
             {
