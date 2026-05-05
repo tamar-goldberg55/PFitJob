@@ -30,9 +30,16 @@ namespace Repository.DataRepositories
             _context.save();
         }
 
-        public Task<List<Match>> GetAll()
+        //public Task<List<Match>> GetAll()
+        //{
+        //    return _context.Match.ToListAsync();
+        //}
+        public async Task<List<Match>> GetAll()
         {
-            return _context.Match.ToListAsync();
+            return await _context.Match
+                .Include(m => m.Job)       // טעינת אובייקט המשרה המקושר
+                .Include(m => m.Candidate) // טעינת אובייקט המועמד המקושר
+                .ToListAsync();
         }
 
         public Task<Match> GetById(int id)

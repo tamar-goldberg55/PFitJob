@@ -20,5 +20,7 @@ namespace Service.Dto
         public CandidateProfiles? Candidate { get; set; }
         public double MatchScore { get; set; } // אחוז התאמה (למשל 95.5)
         public DateTime MatchDate { get; set; } // תאריך ריצת האלגוריתם
+        public string Status { get; set; } = "pending"; // סטטוס המאץ' (pending, accepted, rejected)
+        public bool IsSelectedByAlgorithm { get; set; }
     }
 }

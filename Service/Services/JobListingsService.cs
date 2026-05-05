@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Repository.DataRepositories;
 using Repository.Interfaces;
 using Repository.models;
 using Service.Dto;
@@ -15,10 +17,13 @@ namespace Service.Services
     {
         private readonly IRepository<JobListings> _repository;
         private readonly IMapper mapper;
-        public JobListingsService(IRepository<JobListings> repository, IMapper map)
+        private readonly JobListingsExtendedRepository _extendedRepository; // Repository מורחב עם Include
+
+        public JobListingsService(IRepository<JobListings> repository, IMapper map, JobListingsExtendedRepository extendedRepository)
         {
             _repository = repository;
-            mapper= map;    
+            mapper = map;    
+            _extendedRepository = extendedRepository; // שימוש ב-Repository המורחב
                 
         }
         //public async Task<JobListingsDto> AddItem(JobListingsDto item)
@@ -51,13 +56,25 @@ namespace Service.Services
         }
         public async Task<List<JobListingsDto>> GetJobByEmployer(int empId)
         {
-            var jobs = await _repository.GetAll();
-            var employerJobs = jobs.Where(job => job.EmployerId == empId).ToList();
-            return mapper.Map<List<JobListings>, List<JobListingsDto>>(employerJobs);
+            Console.WriteLine($"🔍 JobListingsService.GetJobByEmployer - Using extended repository for EmployerId: {empId}");
+            
+            // שימוש ב-Repository המורחב עם Include - מחזיר Entities
+            var jobsWithMatches = await _extendedRepository.GetJobByEmployerWithMatches(empId);
+            
+            // מיפוי ה-Entities ל-DTOs עם AutoMapper
+            return mapper.Map<List<JobListings>, List<JobListingsDto>>(jobsWithMatches);
         }
         public async Task<JobListingsDto> GetById(int id)
         {
             return mapper.Map<JobListings, JobListingsDto>(await _repository.GetById(id));
+        }
+
+        public async Task<List<JobListings>> GetJobByEmployerWithMatches(int empId)
+        {
+            Console.WriteLine($"🔍 JobListingsService.GetJobByEmployerWithMatches - Using extended repository for EmployerId: {empId}");
+            
+            // שימוש ב-Repository המורחב עם Include - מחזיר Entities
+            return await _extendedRepository.GetJobByEmployerWithMatches(empId);
         }
 
         public async Task<bool> ToggleJobStatus(int jobId, bool isActive)

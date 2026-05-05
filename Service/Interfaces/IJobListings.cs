@@ -1,4 +1,5 @@
-﻿using Service.Dto;
+﻿using Repository.models;
+using Service.Dto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,5 +12,6 @@ namespace Service.Interfaces
     {
         Task<bool> ToggleJobStatus(int jobId, bool isActive);//פתיחה או סגירה של משרה 
         Task<List<JobListingsDto>> GetJobByEmployer(int empId);
+        Task<List<JobListings>> GetJobByEmployerWithMatches(int empId); // מתודה חדשה עם Include למאצ'ים - מחזירה Entities
     }
 }

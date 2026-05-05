@@ -25,11 +25,14 @@ namespace Repository.models
         public string Title { get; set; }
         public string Description { get; set; }
         public string Location { get; set; } // מיקום המשימה
-        public decimal Payment { get; set; } // שכר למשימה
+        public decimal? Payment { get; set; } // שכר למשימה
         public DateTime RequiredDate { get; set; } // מתי זה קורה
         public bool IsCatch { get; set; }
         public bool IsRemote { get; set; } // האם המשרה היא מהבית?
         public bool IsJobWithPepole { get; set; }
+        
+        // ניווט למאצ'ים המקושרים למשרה
+        public virtual List<Match> Matches { get; set; } = new List<Match>();
         
 
 

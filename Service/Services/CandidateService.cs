@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Service.Services
 {
-    public class CandidateService:ICandidateProfile
+    public class CandidateService : ICandidateProfile
     {
         private readonly IRepositoryCandidateProfiles _repository;
         private readonly IMapper mapper;
@@ -95,31 +95,52 @@ namespace Service.Services
         }
 
       
-        public async Task<bool> UpdatePreferences(int candidateId, CandidateProfileDto preferences)
+        public async Task<CandidateProfiles> UpdatePreferences(int candidateId, CandidateProfileDto preferences)
         {
-            Console.WriteLine($"DEBUG: UpdatePreferences called with candidateId={candidateId}");
+            Console.WriteLine($"DEBUG: UpdatePreferences (Upsert) called with candidateId={candidateId}");
             
-            // 1. שליפת המועמד לפי UserId (לא לפי Id של הפרופיל)
-            CandidateProfiles can = await _repository.GetByUserId(candidateId);
+            // 1. שליפת המועמד לפי UserId
+            CandidateProfiles existingProfile = await _repository.GetByUserId(candidateId);
             
-            Console.WriteLine($"DEBUG: GetByUserId returned: {(can == null ? "NULL" : $"ProfileId={can.Id}, UserId={can.UserId}")}");
+            Console.WriteLine($"DEBUG: GetByUserId returned: {(existingProfile == null ? "NULL" : $"ProfileId={existingProfile.Id}, UserId={existingProfile.UserId}")}");
 
-            if (can == null) return false;
+            if (existingProfile != null)
+            {
+                // 2. עדכון הפרופיל הקיים
+                existingProfile.activity = preferences.Activity;
+                existingProfile.City = preferences.City;
+                existingProfile.MaxDistance = preferences.MaxDistance;
+                existingProfile.IsRemoteOnly = preferences.IsRemoteOnly;
+                existingProfile.level = preferences.Level;
+                existingProfile.MinHourlyRate = preferences.MinHourlyRate;
+                existingProfile.Withpepole = preferences.WithPeople;
+                existingProfile.CategoryId = preferences.CategoryId;
 
-            // 2. עדכון השדות (שימי לב שאני לא נוגעת ב-Id וב-User)
-            can.activity = preferences.Activity;
-            can.City = preferences.City;
-            can.MaxDistance = preferences.MaxDistance;
-            can.IsRemoteOnly = preferences.IsRemoteOnly;
-            can.level = preferences.Level;
-            can.MinHourlyRate = preferences.MinHourlyRate;
-            can.Withpepole = preferences.WithPeople;
-            can.CategoryId = preferences.CategoryId;
+                // 3. עדכון בבסיס הנתונים
+                await _repository.UpdateItem(existingProfile.Id, existingProfile);
+                Console.WriteLine($"DEBUG: Updated existing profile {existingProfile.Id}");
+                return existingProfile; // החזרת את הפרופיל שעודכן
+            }
+            else
+            {
+                // 4. יצירת פרופיל חדש אם לא קיים
+                var newProfile = new CandidateProfiles
+                {
+                    UserId = candidateId, // ה-UserId הוא ה-ID של המשתמש המאומת
+                    activity = preferences.Activity,
+                    City = preferences.City,
+                    MaxDistance = preferences.MaxDistance,
+                    IsRemoteOnly = preferences.IsRemoteOnly,
+                    level = preferences.Level,
+                    MinHourlyRate = preferences.MinHourlyRate,
+                    Withpepole = preferences.WithPeople,
+                    CategoryId = preferences.CategoryId
+                };
 
-            // 3. עדכון בבסיס הנתונים - משתמשים ב-Id האמיתי של הפרופיל
-            await _repository.UpdateItem(can.Id, can);
-
-            return true;
+                var createdProfile = await _repository.AddItem(newProfile);
+                Console.WriteLine($"DEBUG: Created new profile {createdProfile.Id} for user {candidateId}");
+                return createdProfile; // החזרת את הפרופיל שנוצר
+            }
         }
     }
 }
