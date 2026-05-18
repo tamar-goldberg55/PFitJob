@@ -14,6 +14,7 @@ namespace Service.Interfaces
         Task<CandidateProfiles> UpdatePreferences(int candidateId, CandidateProfileDto preferences); // Upsert: עדכון או יצירת פרופיל - מחזיר אובייקט
         Task CandidateTakesJob(int candidateId, int jobId);//לבדוק את זה לאחר עדכון המשרות
         Task<CandidateProfileDto> GetByUserId(int userId); // חיפוש פרופיל לפי UserId
+        Task<CandidateProfileDto> GetTOEmp(int userId);
 
     }
 }

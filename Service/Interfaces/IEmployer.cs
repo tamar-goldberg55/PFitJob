@@ -10,6 +10,7 @@ namespace Service.Interfaces
     public interface IEmployer:IService<EmployerDto>
     {
         Task<List<JobListingsDto>> GetEmployerJobs(int employerId);//שליפת כל המשרות שמעסיק מסוים פרסם 
+        Task<EmployerDto> GetEmployerByUserId(int userId);
         Task<EmployerDto> GetEmployerStats(int employerId);// שליפת נתונים סטטיסטים כמו משרות פעילות כמה התענינו 
     }
 }

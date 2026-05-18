@@ -52,5 +52,14 @@ namespace Repository.DataRepositories
             Console.WriteLine($"✅ JobListingsExtendedRepository - Returning {jobsWithMatches.Count} jobs with matches");
             return jobsWithMatches;
         }
+        public async Task<List<JobListings>> GetJobsWithApplicants(int empId)
+        {
+            return await _context.JobListings
+                .Include(j => j.Matches)
+                    .ThenInclude(m => m.Candidate)
+                        .ThenInclude(c => c.User) // כדי לקבל את שם המועמד מהטבלה של המשתמשים
+                .Where(job => job.EmployerId == empId)
+                .ToListAsync();
+        }
     }
 }

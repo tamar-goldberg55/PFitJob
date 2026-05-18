@@ -14,7 +14,7 @@ namespace Service.Dto
 
         [ForeignKey("JobListings")]
         public int JobId { get; set; } // FK למשרה
-        public JobListings ?Job { get; set; }
+        public JobListingsDto? Job { get; set; }
         [ForeignKey("CandidateProfiles")]
         public int CandidateId { get; set; } // FK למועמד
         public CandidateProfiles? Candidate { get; set; }

@@ -64,7 +64,13 @@ namespace WebApi
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+           .AddJsonOptions(options =>
+           {
+               // זה יקטע את המעגליות באופן אוטומטי בזמן יצירת ה-JSON
+               options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+               options.JsonSerializerOptions.WriteIndented = true;
+           });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -107,6 +113,9 @@ namespace WebApi
             builder.Services.AddScoped<IUser, UserService>();
             builder.Services.AddScoped<ICategories, CategoryService>();
             builder.Services.AddScoped<IEmployer, EmployerService>();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<ITokenBlacklist, TokenBlacklistService>();
+
 
             builder.Services.AddAutoMapper(typeof(Service.Services.MyMapper).Assembly);
 
@@ -118,9 +127,12 @@ namespace WebApi
             builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
             builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
             builder.Services.AddScoped<IRepositoryCandidateProfiles, CandidateProfilesRepository>();
-            
+
             // Extended Repository עם Include
             builder.Services.AddScoped<JobListingsExtendedRepository>();
+
+            // Add Daily Matching Service
+            builder.Services.AddHostedService<Service.Services.DailyMatchingService>();
 
             var app = builder.Build();
 
@@ -133,6 +145,24 @@ namespace WebApi
 
             app.UseCors(); // Enable CORS
             app.UseHttpsRedirection();
+            app.Use(async (context, next) =>
+            {
+                var token = context.Request.Headers["Authorization"]
+                    .ToString().Replace("Bearer ", "");
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var blacklist = context.RequestServices
+                        .GetRequiredService<ITokenBlacklist>();
+                    if (blacklist.IsRevoked(token))
+                    {
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteAsync("Token revoked");
+                        return;
+                    }
+                }
+                await next();
+            });
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -148,9 +178,9 @@ namespace WebApi
         {
             using var scope = services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<DataBase>();
-            
+
             Console.WriteLine("🌱 Starting Seed Data creation...");
-            
+
             try
             {
                 // בדיקה אם כבר יש נתונים
@@ -221,7 +251,7 @@ namespace WebApi
                 // יצירת Matches עם JobId 2102
                 var matches = new List<Match>();
                 var jobId = 2102; // ה-JobId הקיים במערכת
-                
+
                 foreach (var candidate in candidates)
                 {
                     matches.Add(new Match

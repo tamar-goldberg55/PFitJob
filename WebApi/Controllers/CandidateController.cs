@@ -40,6 +40,18 @@ namespace WebApi.Controllers
         {
             return _candidateService.GetById(id);
         }
+        [HttpGet("byUser/{id}")]
+        public Task<CandidateProfileDto> GetByUser(int id)
+        {
+            return _candidateService.GetByUserId(id);
+        }
+         
+        [HttpGet("toemp/{id}")]
+        public Task<CandidateProfileDto> GetTOEmp(int id)
+        {
+            return _candidateService.GetTOEmp(id);
+        }
+
 
         // יצירת מועמד חדש
         [HttpPost("profile")]
@@ -128,6 +140,7 @@ namespace WebApi.Controllers
         [HttpGet("my-profile")]
         public async Task<ActionResult<CandidateProfileDto>> GetMyProfile()
         {
+
             // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן - ננסה כמה שמות אפשריים
             var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
                               ?? User.FindFirst("UserId")?.Value

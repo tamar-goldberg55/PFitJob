@@ -25,5 +25,8 @@ namespace Repository.models
         public bool IsSelectedByAlgorithm { get; set; }
         public string Status { get; set; } = "pending"; // סטטוס המאץ' (pending, accepted, rejected)
 
+
     }
 }
+
+

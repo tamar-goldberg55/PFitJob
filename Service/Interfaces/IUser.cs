@@ -17,6 +17,8 @@ namespace Service.Interfaces
 
         // פונקציית התחברות - מקבלת פרטי כניסה ומחזירה את פרטי המשתמש
         Task<string> LoginAsync(string email, string password);
+        Task LogoutAsync(string token);
+
 
     }
 }

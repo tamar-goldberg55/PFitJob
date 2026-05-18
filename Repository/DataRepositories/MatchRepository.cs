@@ -61,7 +61,8 @@ namespace Repository.DataRepositories
                 // 3. עדכון השדות הרלוונטיים מהמודל Match
                 existingMatch.MatchScore = item.MatchScore;
                 existingMatch.MatchDate = item.MatchDate;
-
+                existingMatch.Status = item.Status;
+                existingMatch.IsSelectedByAlgorithm = item.IsSelectedByAlgorithm;
                 // בדרך כלל לא נרצה לעדכן את ה-JobId או ה-CandidateId בתוך Update,
                 // כי אם הם משתנים, זה כבר נחשב "Match" חדש לגמרי.
 

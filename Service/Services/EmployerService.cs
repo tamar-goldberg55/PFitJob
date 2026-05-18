@@ -21,25 +21,7 @@ namespace Service.Services
                 _repository = repository;
                    mapper=map;
         }
-        //public async Task<List<JobListingsDto>> GetEmployerJobs(int employerId)
-        //{
-        //    System.Diagnostics.Debugger.Break(); // זה יכריח את ה-Visual Studio לעצור פה!
-        //    var employer = await _repository.GetByUserId(employerId);
-
-        //    // אם המעסיק לא קיים או שרשימת המשרות ריקה
-        //    if (employer == null || employer.MyJobs == null)
-        //    {
-        //        return new List<JobListingsDto>();
-        //    }
-
-        //    // משתמשים ב-mapper (שהגדרת כ-mapper) כדי להמיר את המשרות
-        //    // אני מניח שיש לך פונקציית מיפוי ב-mapper או שאת משתמשת ב-mapper.Map
-        //    var jobsDto = employer.MyJobs
-        //        .Select(job => mapper.Map<JobListings, JobListingsDto>(job))
-        //        .ToList();
-
-        //    return jobsDto;
-        //}
+      
         public async Task<List<JobListingsDto>> GetEmployerJobs(int userId)
         {
             var employer = await _repository.GetByUserId(userId);
@@ -54,10 +36,7 @@ namespace Service.Services
             throw new NotImplementedException();
         }
 
-        //public Task<List<EmployerDto>> GetAll()
-        //{
-        //    return mapper.Map<Task<List<Employer>>, Task<List<EmployerDto>>>(_repository.GetAll());
-        //}
+
         public async Task<List<EmployerDto>> GetAll()
         {
             var employers = await _repository.GetAll(); // מחכים לנתונים מה-DB
@@ -67,7 +46,11 @@ namespace Service.Services
         {
             return mapper.Map<Employer, EmployerDto>(await _repository.GetById(id));
         }
+        public async Task<EmployerDto> GetEmployerByUserId(int userId)
+        {
+            return mapper.Map<Employer, EmployerDto>(await _repository.GetByUserId(userId));
 
+        }
         public async Task<EmployerDto> AddItem(EmployerDto item)
         {
             return mapper.Map<Employer, EmployerDto>(

@@ -1,7 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Repository.models;
 using Service.Dto;
 using Service.Interfaces;
-using Repository.models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -74,6 +75,16 @@ namespace WebApi.Controllers
         public Task Delete(int id)
         {
             return _userService.DeleteItem(id);
+        }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var token = Request.Headers["Authorization"]
+                .ToString().Replace("Bearer ", "");
+
+            await _userService.LogoutAsync(token);
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }
