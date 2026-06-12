@@ -39,8 +39,8 @@ namespace CodeFirst.Migrations
                     b.Property<bool>("IsRemoteOnly")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("MaxDistance")
-                        .HasColumnType("int");
+                    b.Property<decimal?>("MaxDistance")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal?>("MinHourlyRate")
                         .HasColumnType("decimal(18,2)");
@@ -138,7 +138,7 @@ namespace CodeFirst.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Payment")
+                    b.Property<decimal?>("Payment")
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("RequiredDate")
@@ -182,6 +182,10 @@ namespace CodeFirst.Migrations
 
                     b.Property<double>("MatchScore")
                         .HasColumnType("float");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 

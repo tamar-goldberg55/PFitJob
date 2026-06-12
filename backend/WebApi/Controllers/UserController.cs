@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Repository.models;
 using Service.Dto;
 using Service.Interfaces;
-using Repository.models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -33,25 +34,28 @@ namespace WebApi.Controllers
         }
 
         // התחברות למערכת
-        //[HttpPost("login")]
-        //public Task<string> Login(string email, string password)
-        //{
-        //    return _userService.LoginAsync(email, password);
-        //}
         [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(string email, [FromQuery] string password)
+        public async Task<ActionResult<string>> Login([FromQuery] string email, [FromQuery] string password)
         {
-            // חשוב להשתמש ב-await כי הפונקציה ב-Service היא async
-            var token = await _userService.LoginAsync(email, password);
-
-            if (token == null)
+            try
             {
-                // אם חזר null, נחזיר שגיאה 401 עם הסבר
-                return Unauthorized("אימייל או סיסמה לא נכונים");
-            }
+                // חשוב להשתמש ב-await כי הפונקציה ב-Service היא async
+                var token = await _userService.LoginAsync(email, password);
 
-            return Ok(token); // אם הכל טוב, נחזיר 200 עם הטוקן
+                if (string.IsNullOrEmpty(token))
+                {
+                    // אם חזר null, נחזיר שגיאה 401 עם הסבר
+                    return Unauthorized("אימייל או סיסמה לא נכונים");
+                }
+
+                return Ok(token); // אם הכל טוב, נחזיר 200 עם הטוקן
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"שגיאה בהתחברות: {ex.Message}");
+            }
         }
+
         // קבלת כל המשתמשים
         [HttpGet]
         public async Task<List<UserDto>> GetAll()
@@ -71,6 +75,16 @@ namespace WebApi.Controllers
         public Task Delete(int id)
         {
             return _userService.DeleteItem(id);
+        }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var token = Request.Headers["Authorization"]
+                .ToString().Replace("Bearer ", "");
+
+            await _userService.LogoutAsync(token);
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }

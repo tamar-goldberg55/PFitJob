@@ -14,11 +14,13 @@ namespace Service.Dto
 
         [ForeignKey("JobListings")]
         public int JobId { get; set; } // FK למשרה
-        public JobListings ?Job { get; set; }
+        public JobListingsDto? Job { get; set; }
         [ForeignKey("CandidateProfiles")]
         public int CandidateId { get; set; } // FK למועמד
         public CandidateProfiles? Candidate { get; set; }
         public double MatchScore { get; set; } // אחוז התאמה (למשל 95.5)
         public DateTime MatchDate { get; set; } // תאריך ריצת האלגוריתם
+        public string Status { get; set; } = "pending"; // סטטוס המאץ' (pending, accepted, rejected)
+        public bool IsSelectedByAlgorithm { get; set; }
     }
 }

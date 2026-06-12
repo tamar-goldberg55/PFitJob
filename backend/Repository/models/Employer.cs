@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Repository.models
 {
+    [Table("Employers")]
     public class Employer
     {
         [Key]

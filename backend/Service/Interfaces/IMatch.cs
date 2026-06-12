@@ -9,13 +9,13 @@ namespace Service.Interfaces
 {
     public interface IMatch : IService<MatchDto>
     {
-        Task<double> CalculateMatchScore(int candidateId, int jobId);//האלגוריתמים שמשווה בין המשרה לבין המועמד 
-
-        Task<List<MatchDto>> RunMatchingAlgorithm(int jobId); //– פונקציה שרצה על כל המועמדים ומעדכנת את טבלת ההתאמות למשרה ספציפית.
-        Task<List<MatchDto>> GetTopMatchesForCandidate(int candidateId, int topCount);// – החזרת המשרות הטובות ביותר עבור מועמד מסוים.
-        Task<double> SolveDP(int candIdx, int jobMask, double[,] matrix, int n, int m);
-        Task<double> GetGlobalSatisfactionRate();
-
+        
+        Task<MatchDto> GetMatchByJC(int idJob, int idCandidate);
+        Task<List<MatchDto>> GetMatchsByEmpID(int idEmp);
+        Task<List<MatchDto>> GetRejecteds(int idEmp);
+        Task<bool> ApplyForJob(int candidateId, int jobId);
+        Task<double> CalculateScorEmp(int candidateId, int jobId);
+        Task<MatchDto> MostMatch(int jobId);
 
     }
 }

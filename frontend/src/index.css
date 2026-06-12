@@ -1,0 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap');
+
+@import "tailwindcss";
+
+/* הגדרת המשתנים בתוך שכבת ה-theme של טיילווינד 4 */
+@theme {
+  --font-heebo: "Heebo", sans-serif;
+  
+  --color-background: hsl(210 40% 98%);
+  --color-foreground: hsl(222 47% 11%);
+  
+  --color-primary: hsl(199 89% 48%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  
+  --color-secondary: hsl(160 84% 39%);
+  --color-secondary-foreground: hsl(0 0% 100%);
+  
+  --color-border: hsl(214 32% 91%);
+  --color-input: hsl(214 32% 91%);
+  --color-ring: hsl(199 89% 48%);
+}
+
+@layer base {
+  * {
+    /* במקום @apply שגורם לשגיאה, נשתמש ב-CSS רגיל */
+    border-color: var(--color-border);
+  }
+  
+  body {
+    background-color: #080C14; /* צבע הרקע הכהה שלך */
+    color: var(--color-foreground);
+    font-family: var(--font-heebo);
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* עיצוב גלילה */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}

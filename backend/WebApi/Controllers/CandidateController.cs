@@ -4,23 +4,26 @@ using Repository.Interfaces;
 using Repository.models;
 using Service.Dto;
 using Service.Interfaces;
+using AutoMapper;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace WebApi.Controllers
 {
-    [Authorize(Roles = "Candidate")] // רק מי שיש לו Role של Candidate בטוקן יכול להיכנס
+    [Authorize] // רק מי שיש לו טוקן תקין יכול להיכנס (ללא בדיקת Role)
     [Route("api/Candidate")]
     [ApiController]
  
     public class CandidateController : ControllerBase
     {
         private readonly ICandidateProfile _candidateService;
+        private readonly IMapper _mapper;
 
-        // הזרקה של ה-Service במקום ה-Repository
-        public CandidateController(ICandidateProfile candidateService)
+        // הזרקה של ה-Service וה-mapper
+        public CandidateController(ICandidateProfile candidateService, IMapper mapper)
         {
             _candidateService = candidateService;
+            _mapper = mapper;
         }
 
         // קבלת כל המועמדים
@@ -37,12 +40,65 @@ namespace WebApi.Controllers
         {
             return _candidateService.GetById(id);
         }
+        [HttpGet("byUser/{id}")]
+        public Task<CandidateProfileDto> GetByUser(int id)
+        {
+            return _candidateService.GetByUserId(id);
+        }
+         
+        [HttpGet("toemp/{id}")]
+        public Task<CandidateProfileDto> GetTOEmp(int id)
+        {
+            return _candidateService.GetTOEmp(id);
+        }
+
 
         // יצירת מועמד חדש
-        [HttpPost]
-        public Task<CandidateProfileDto> Post([FromBody] CandidateProfileDto candidateDto)
+        [HttpPost("profile")]
+        public async Task<ActionResult<CandidateProfileDto>> Post([FromBody] CandidateProfileDto candidateDto)
         {
-            return _candidateService.AddItem(candidateDto);
+            // חילוץ ה-ID של המשתמש מה-Claims של הטוקן - ננסה כמה שמות אפשריים
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("UserId")?.Value
+                              ?? User.FindFirst("id")?.Value
+                              ?? User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                // לצורך דיבאג - נדפיס את כל ה-claims שקיימים
+                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+                return BadRequest($"לא נמצא מזהה משתמש בטוקן. Claims קיימים: {string.Join(", ", allClaims)}");
+            }
+
+            // המרה של ה-ID למספר (int)
+            if (!int.TryParse(userIdClaim, out int candidateId))
+            {
+                return BadRequest("מזהה משתמש לא תקין");
+            }
+
+            Console.WriteLine($"DEBUG CTRL: Extracted UserId from token: {candidateId}");
+
+            // הגדרת ה-ID של המשתמש ב-DTO
+            candidateDto.Id = candidateId;
+
+            try
+            {
+                var result = await _candidateService.UpdatePreferences(candidateId, candidateDto);
+                if (result != null)
+                {
+                    // המרת את הפרופיל שנוצר/עודכן
+                    var resultDto = _mapper.Map<CandidateProfiles, CandidateProfileDto>(result);
+                    return Ok(resultDto);
+                }
+                else
+                {
+                    return BadRequest("לא נמצא פרופיל לעדכון");
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"שגיאה בעדכון פרופיל: {ex.Message}");
+            }
         }
 
         // עדכון פרטי מועמד
@@ -61,7 +117,7 @@ namespace WebApi.Controllers
 
         // פונקציה מיוחדת: עדכון העדפות מועמד
         [HttpPatch("{id}/preferences")]
-        public Task<bool> UpdatePreferences(int id, [FromBody] CandidateProfileDto preferences)
+        public Task<CandidateProfiles> UpdatePreferences(int id, [FromBody] CandidateProfileDto preferences)
         {
             return _candidateService.UpdatePreferences(id, preferences);
         }
@@ -84,13 +140,18 @@ namespace WebApi.Controllers
         [HttpGet("my-profile")]
         public async Task<ActionResult<CandidateProfileDto>> GetMyProfile()
         {
-            // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן
-            // השתמשי ב-NameIdentifier כי זה הסטנדרט שבו נשמר ה-ID בדרך כלל
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            // 1. חילוץ ה-ID של המשתמש מה-Claims של הטוקן - ננסה כמה שמות אפשריים
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                              ?? User.FindFirst("UserId")?.Value
+                              ?? User.FindFirst("id")?.Value
+                              ?? User.FindFirst("sub")?.Value;
 
             if (string.IsNullOrEmpty(userIdClaim))
             {
-                return Unauthorized("לא נמצא מזהה משתמש בטוקן");
+                // לצורך דיבאג - נדפיס את כל ה-claims שקיימים
+                var allClaims = User.Claims.Select(c => $"{c.Type}: {c.Value}").ToList();
+                return BadRequest($"לא נמצא מזהה משתמש בטוקן. Claims קיימים: {string.Join(", ", allClaims)}");
             }
 
             // 2. המרה של ה-ID למספר (int)
@@ -99,10 +160,27 @@ namespace WebApi.Controllers
                 return BadRequest("מזהה משתמש לא תקין");
             }
 
-            // 3. שליפת הפרופיל האמיתי מהשירות
-            var profile = await _candidateService.GetById(candidateId);
+            // 3. שליפת הפרופיל לפי UserId (לא לפי Id של הפרופיל)
+            var profile = await _candidateService.GetByUserId(candidateId);
 
-            if (profile == null) return NotFound("לא נמצא פרופיל למשתמש המחובר");
+            if (profile == null) 
+            {
+                // מחזיר פרופיל ריק עם ערכים ברירת מחדל במקום ה-null כדי שה-frontend לא יקרוס
+                var emptyProfile = new CandidateProfileDto
+                {
+                    Id = 0,
+                    UserId = candidateId,
+                    Activity = true,
+                    City = "",
+                    MaxDistance = 50,
+                    MinHourlyRate = 100,
+                    Level = elevel.Easy,
+                    IsRemoteOnly = false,
+                    WithPeople = true,
+                    CategoryId = 1
+                };
+                return Ok(emptyProfile);
+            }
 
             return Ok(profile);
         }

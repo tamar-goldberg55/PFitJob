@@ -30,9 +30,16 @@ namespace Repository.DataRepositories
             _context.save();
         }
 
-        public Task<List<Match>> GetAll()
+        //public Task<List<Match>> GetAll()
+        //{
+        //    return _context.Match.ToListAsync();
+        //}
+        public async Task<List<Match>> GetAll()
         {
-            return _context.Match.ToListAsync();
+            return await _context.Match
+                .Include(m => m.Job)       // טעינת אובייקט המשרה המקושר
+                .Include(m => m.Candidate) // טעינת אובייקט המועמד המקושר
+                .ToListAsync();
         }
 
         public Task<Match> GetById(int id)
@@ -54,7 +61,8 @@ namespace Repository.DataRepositories
                 // 3. עדכון השדות הרלוונטיים מהמודל Match
                 existingMatch.MatchScore = item.MatchScore;
                 existingMatch.MatchDate = item.MatchDate;
-
+                existingMatch.Status = item.Status;
+                existingMatch.IsSelectedByAlgorithm = item.IsSelectedByAlgorithm;
                 // בדרך כלל לא נרצה לעדכן את ה-JobId או ה-CandidateId בתוך Update,
                 // כי אם הם משתנים, זה כבר נחשב "Match" חדש לגמרי.
 

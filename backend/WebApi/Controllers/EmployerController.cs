@@ -36,6 +36,13 @@ namespace WebApi.Controllers
             // אם לא נמצא, ה-Client יקבל בדרך כלל 204 No Content או null
             return await _employerService.GetById(id);
         }
+        [HttpGet("byUser/{userId}")]
+        public async Task<EmployerDto> GetEmployerbyUser(int userId)
+        {
+            // מחזיר את האובייקט ישירות. 
+            // אם לא נמצא, ה-Client יקבל בדרך כלל 204 No Content או null
+            return await _employerService.GetEmployerByUserId(userId);
+        }
 
         // GET api/Employer/5/jobs
         //[HttpGet("{id}/jobs")]

@@ -12,104 +12,81 @@ using System.Threading.Tasks;
 
 namespace Service.Services
 {
-    public class MatchService: IMatch
+    public class MatchService(
+        IRepository<Match> matchRepository,
+        IRepositoryCandidateProfiles candidateRepository,
+        IRepository<JobListings> jobRepository,
+        IMapper mapper) : IMatch
     {
-        private readonly IRepository<Match> _repository;
-        private readonly IRepository<CandidateProfiles> _candidateRepository;
-        private readonly IRepository<JobListings> _jobRepository;
-        private readonly IMapper mapper;
-
+        private readonly IRepository<Match> _repository = matchRepository;
+        private readonly IRepositoryCandidateProfiles _candidateRepository = candidateRepository;
+        private readonly IRepository<JobListings> _jobRepository = jobRepository;
+        private readonly IMapper _mapper = mapper;
         // מילון לשמירת תוצאות ביניים (Memoization)
         private Dictionary<string, double> _memo = new Dictionary<string, double>();
         // מילון לשמירת הבחירה הכי טובה בכל שלב (כדי לשחזר את השיבוץ)
         private Dictionary<string, int> _bestJobChoice = new Dictionary<string, int>();
 
-        public MatchService(IRepository<Match> matchRepository,
-                            IRepository<CandidateProfiles> candidateRepository,
-                            IRepository<JobListings> jobRepository,
-                            IMapper mapper)
+        public async Task<MatchDto> AddItem(MatchDto item)
         {
-            _repository = matchRepository;
-            _candidateRepository = candidateRepository;
-            _jobRepository = jobRepository;
-            this.mapper = mapper;
-        }
-        public  async Task<MatchDto> AddItem(MatchDto item)
-        {
-            return mapper.Map<Match, MatchDto>(
+            // 1. המרת ה-DTO לישות (Entity) כדי שנוכל לעבוד איתה
+            var matchEntity = _mapper.Map<Match>(item);
 
-            await _repository.AddItem(mapper.Map<MatchDto, Match>(item)));
-        }
+            // 2. בדיקה האם כבר קיימת התאמה בין המועמד הספציפי למשרה הספציפית
+            var allMatches = await _repository.GetAll();
+            var existingMatch = allMatches.FirstOrDefault(m =>
+                m.CandidateId == matchEntity.CandidateId &&
+                m.JobId == matchEntity.JobId);
 
-        public async Task<double> CalculateMatchScore(int candidateId, int jobId)
-        {
-            var candidate = await _candidateRepository.GetById(candidateId);
-            var job = await _jobRepository.GetById(jobId);
-
-            // 1. סינון ראשוני (Hard Filtering)
-            // אם המשרה תפוסה, המועמד לא פעיל, או שהם בכלל לא מאותה קטגוריה - אין טעם להמשיך
-            if (candidate == null || job == null || job.IsCatch || !candidate.activity)
-                return 0;
-
-            // בדיקת קטגוריה: אם המועמד והמשרה לא באותו תחום, הציון הוא 0
-            if (candidate.CategoryId != job.CategoryId)
-                return 0;
-
-            double score = 0;
-
-            // 2. בדיקת מיקום ומרחק
-            if (job.IsRemote)
+            // 3. אם לא קיים - מוסיפים. אם קיים - מחזירים את הקיים (או מעדכנים)
+            if (existingMatch == null)
             {
-                score += 20; // בונוס על משרה מרחוק (חוסך נסיעות)
+                var addedMatch = await _repository.AddItem(matchEntity);
+                return _mapper.Map<MatchDto>(addedMatch);
             }
-            else
+
+            // מחזירים את ה-Match הקיים כדי למנוע כפילויות ב-DB
+            return _mapper.Map<MatchDto>(existingMatch);
+        }
+
+        public async Task<MatchDto> GetMatchByJC(int idJob, int idCandidate)
+        {
+            var allMatches = await GetAll();
+            var match = allMatches.FirstOrDefault(m => m.JobId == idJob && m.CandidateId == idCandidate);
+            if (match != null)
+                return _mapper.Map<MatchDto>(match);
+            return null;
+        }
+
+        public async Task<List<MatchDto>> GetMatchsByEmpID(int idEmp)
+        {
+            var allJobs = await _jobRepository.GetAll();
+            var jobsEmp = allJobs.Where(j => j.EmployerId == idEmp).ToList(); // Filter jobs by EmployerId
+
+            var allMatches = await _repository.GetAll();
+            var filteredMatches = allMatches.Where(m => jobsEmp.Any(job => job.Id == m.JobId)).ToList(); // Correctly check if JobId exists in jobsEmp
+
+            var matchDtos = _mapper.Map<List<Match>, List<MatchDto>>(filteredMatches);
+
+            foreach (var dto in matchDtos)
             {
-                // כאן נכנסת הלוגיקה של המרחק. 
-                // הערה: בפרויקט גמר, אם אין לך API של מפות, בדרך כלל מניחים שערים זהות = מרחק 0
-                if (candidate.City == job.Location)
+                var jobDto = allJobs.FirstOrDefault(j => j.Id == dto.JobId);
+                if (jobDto != null)
                 {
-                    score += 20; // אותה עיר - התאמה מצוינת
+                    dto.Job = _mapper.Map<JobListingsDto>(jobDto); // Correctly map JobListings to JobListingsDto
                 }
-                // אם תרצי להוסיף חישוב מרחק אמיתי בין ערים, זה המקום
             }
 
-            // 3. התאמת רמת קושי (Level)
-            if (candidate.level == job.leveJob)
-            {
-                score += 30;
-            }
-            else if (Math.Abs((int)candidate.level - (int)job.leveJob) == 1)
-            {
-                score += 15;
-            }
-
-            // 4. עבודה מהבית (IsRemoteOnly)
-            if (candidate.IsRemoteOnly && job.IsRemote)
-                score += 20;
-            else if (!candidate.IsRemoteOnly)
-                score += 10; // גמישות המועמד שווה נקודות
-
-            // 5. עבודה עם אנשים
-            if (candidate.Withpepole == job.IsJobWithPepole)
-                score += 20;
-
-            // 6. שכר
-            if (job.Payment >= candidate.MinHourlyRate)
-                score += 10;
-
-            return score;
+            return matchDtos;
         }
-
-
-        public  async Task DeleteItem(int id)
+        public async Task DeleteItem(int id)
         {
             await _repository.DeleteItem(id);
         }
 
         public async Task<List<MatchDto>> GetAll()
         {
-            return mapper.Map<List<Match>, List<MatchDto>>(await
-                                _repository.GetAll()); throw new NotImplementedException();
+            return mapper.Map<List<Match>, List<MatchDto>>(await _repository.GetAll());
         }
 
         public async Task<MatchDto> GetById(int id)
@@ -117,140 +94,149 @@ namespace Service.Services
             return mapper.Map<Match, MatchDto>(await _repository.GetById(id));
         }
 
-        //public Task<List<MatchDto>> GetTopMatchesForCandidate(int candidateId, int topCount)
-        //{
-
-
-        //}
-        public async Task<List<MatchDto>> GetTopMatchesForCandidate(int candidateId, int topCount)
-        {
-            // שליפת כל ההתאמות של המועמד מהדאטה-בייס
-            var allMatches = await _repository.GetAll();
-
-            // סינון: אנחנו רוצים רק את ההתאמה שהאלגוריתם הדינמי בחר כ"הכי טובה למערכת"
-            var bestMatch = allMatches
-                .Where(m => m.CandidateId == candidateId && m.IsSelectedByAlgorithm == true)
-                .OrderByDescending(m => m.MatchScore)
-                .Take(1) // לוקחים רק אחד, כפי שביקשת
-                .ToList();
-
-            // אם במקרה האלגוריתם עוד לא רץ או לא מצא שידוך אופטימלי, 
-            // אפשר להחזיר את ההתאמה הכי גבוהה באופן כללי כברירת מחדל
-            if (!bestMatch.Any())
-            {
-                bestMatch = allMatches
-                    .Where(m => m.CandidateId == candidateId)
-                    .OrderByDescending(m => m.MatchScore)
-                    .Take(1)
-                    .ToList();
-            }
-
-            return mapper.Map<List<Match>, List<MatchDto>>(bestMatch);
-        }
-        public async Task<List<MatchDto>> RunMatchingAlgorithm(int dummy)
-        {
-            var candidates = (await _candidateRepository.GetAll()).ToList();
-            var jobs = (await _jobRepository.GetAll()).ToList();
-            int n = candidates.Count;
-            int m = jobs.Count;
-
-            // בניית מטריצת ציונים (מועמדים מול משרות)
-            double[,] matrix = new double[n, m];
-            for (int i = 0; i < n; i++)
-                for (int j = 0; j < m; j++)
-                    matrix[i, j] = await CalculateMatchScore(candidates[i].Id, jobs[j].Id);
-
-            _memo.Clear();
-            _bestJobChoice.Clear();
-
-            // הפעלת ה-DP
-            await SolveDP(0, 0, matrix, n, m);
-
-            // שחזור הבחירות האופטימליות מהזיכרון
-            List<Match> finalMatches = new List<Match>();
-            int currentMask = 0;
-            for (int i = 0; i < n; i++)
-            {
-                string state = $"{i}-{currentMask}";
-                if (_bestJobChoice.ContainsKey(state))
-                {
-                    int chosenJobIdx = _bestJobChoice[state];
-                    if (chosenJobIdx != -1) // -1 אומר שלא נמצא שידוך משתלם
-                    {
-                        finalMatches.Add(new Match
-                        {
-                            CandidateId = candidates[i].Id,
-                            JobId = jobs[chosenJobIdx].Id,
-                            MatchScore = matrix[i, chosenJobIdx],
-                            MatchDate = DateTime.Now,
-                            IsSelectedByAlgorithm = true
-                        });
-                        currentMask |= (1 << chosenJobIdx); // סימון המשרה כתפוסה
-                    }
-                }
-            }
-
-            // שמירה ל-DB (מומלץ למחוק שיבוצים קודמים קודם)
-            foreach (var match in finalMatches)
-            {
-                await _repository.AddItem(match);
-            }
-
-            return mapper.Map<List<Match>, List<MatchDto>>(finalMatches);
-        }
-
-        public async Task<double> SolveDP(int candIdx, int jobMask, double[,] matrix, int n, int m)
-        {
-            if (candIdx == n) return 0;
-
-            string state = $"{candIdx}-{jobMask}";
-            if (_memo.ContainsKey(state)) return _memo[state];
-
-            // אפשרות א': המועמד הנוכחי לא משובץ
-            double bestScore = await SolveDP(candIdx + 1, jobMask, matrix, n, m);
-            int bestJob = -1;
-
-            // אפשרות ב': לנסות לשבץ לכל משרה פנויה
-            for (int j = 0; j < m; j++)
-            {
-                // בדיקה אם המשרה j פנויה בביטמאסק
-                if ((jobMask & (1 << j)) == 0)
-                {
-                    // ציון = (עצם השיבוץ כדי למנוע אבטלה) + (התאמה למשרה)
-                    double currentScore = (100 + matrix[candIdx, j]) +
-                                          await SolveDP(candIdx + 1, jobMask | (1 << j), matrix, n, m);
-
-                    if (currentScore > bestScore)
-                    {
-                        bestScore = currentScore;
-                        bestJob = j;
-                    }
-                }
-            }
-
-            _bestJobChoice[state] = bestJob;
-            return _memo[state] = bestScore;
-        }
-        public async Task<double> GetGlobalSatisfactionRate()
-        {
-            var allFinalMatches = (await _repository.GetAll())
-                                  .Where(m => m.IsSelectedByAlgorithm == true)
-                                  .ToList();
-
-            if (!allFinalMatches.Any()) return 0;
-
-            // ממוצע אחוזי ההתאמה של כל מי ששובץ
-            double averageScore = allFinalMatches.Average(m => m.MatchScore);
-
-            return averageScore;
-        }
-
         public async Task UpdateItem(int id, MatchDto item)
         {
             var MatchEntity = mapper.Map<MatchDto, Match>(item);
-
-            // 2. שולחים לרפוסיטורי את ה-ID ואת הישות הממופת
             await _repository.UpdateItem(id, MatchEntity);
         }
+
+
+        public async Task<bool> ApplyForJob(int candidateId, int jobId)
+        {
+            // 1. בדיקה אם כבר קיים Match (אולי האלגוריתם כבר הציע לו את המשרה)
+            var allMatches = await _repository.GetAll();
+            var existingMatch = allMatches.FirstOrDefault(m => m.CandidateId == candidateId && m.JobId == jobId);
+
+            if (existingMatch != null)
+            {
+                // אם קיים - פשוט מעדכנים סטטוס ל"הוגש" (Applied / Accepted)
+                existingMatch.Status = "Applied";
+                existingMatch.MatchDate = DateTime.Now;
+                await _repository.UpdateItem(existingMatch.Id, existingMatch);
+                return true;
+            }
+
+            // 2. אם לא קיים Match - יוצרים אחד חדש ביוזמת המועמד
+            var newMatch = new Match
+            {
+                CandidateId = candidateId,
+                JobId = jobId,
+                MatchDate = DateTime.Now,
+                Status = "Applied",
+                IsSelectedByAlgorithm = false, // זה לא בא מהאלגוריתם, זה מהמועמד
+                MatchScore = 0 // נחשב ציון בכל זאת
+            };
+
+            await _repository.AddItem(newMatch);
+            return true;
+        }
+
+        public async Task<double> CalculateScorEmp(int candidateId, int jobId)
+        {
+            // 1. שליפת המידע מה-DB
+            var candidate = await _candidateRepository.GetById(candidateId);
+            var job = await _jobRepository.GetById(jobId);
+
+            if (candidate == null || job == null) return 0;
+
+            double score = 0;
+            int criteriaCount = 0;
+
+            // 2. השוואת קטגוריה (משקל גבוה מאוד)
+            criteriaCount++;
+            if (candidate.CategoryId == job.CategoryId) score += 40;
+
+            // 3. השוואת רמת קושי/ניסיון (elevel)
+            criteriaCount++;
+            if (candidate.level == job.leveJob) score += 20;
+            else if (Math.Abs((int)candidate.level - (int)job.leveJob) == 1) score += 10; // קרוב
+
+            // 4. עבודה מרחוק (IsRemote)
+            criteriaCount++;
+            if (candidate.IsRemoteOnly && job.IsRemote) score += 20;
+            else if (!candidate.IsRemoteOnly) score += 10; // המועמד גמיש
+
+            // 5. שכר (MinHourlyRate)
+            if (job.Payment.HasValue && candidate.MinHourlyRate.HasValue)
+            {
+                criteriaCount++;
+                if (job.Payment >= candidate.MinHourlyRate) score += 20;
+            }
+
+            // 6. הפחתת ניקוד אם המועמד עדכן את הפרופיל לאחר הגשת ההתאמה
+            // נניח שיש עמודות CandidateProfiles.ProfileUpdatedDate ו-Match.MatchDate
+            // אם ProfileUpdatedDate > MatchDate, הפחת ניקוד (למשל 20%)
+            var match = await _repository.GetAll();
+            var relevantMatch = match.FirstOrDefault(m => m.CandidateId == candidate.Id && m.JobId == jobId);
+
+            if (relevantMatch != null)
+            {
+                var profileUpdatedDateProp = candidate.GetType().GetProperty("ProfileUpdatedDate");
+                var matchDateProp = relevantMatch.GetType().GetProperty("MatchDate");
+                if (profileUpdatedDateProp != null && matchDateProp != null)
+                {
+                    var profileUpdatedDate = profileUpdatedDateProp.GetValue(candidate) as DateTime?;
+                    var matchDate = matchDateProp.GetValue(relevantMatch) as DateTime?;
+                    if (profileUpdatedDate.HasValue && matchDate.HasValue && profileUpdatedDate > matchDate)
+                    {
+                        score *= 0.8; // הפחתה של 20%
+                    }
+                }
+            }
+
+            return score; // ציון מתוך 100
+        }
+        public async Task<MatchDto> MostMatch(int jobId)
+        {
+            var job = await _jobRepository.GetById(jobId);
+
+            var matchesCan = (await _repository.GetAll())
+                                            .Where(m => m.JobId == jobId)
+                                            .ToHashSet(); // HashSet for quick lookup
+
+            var suggestions = new List<MatchDto>();
+
+            foreach (var can in matchesCan)
+            {
+                // Quick in-memory check instead of another DB call
+                double score = await CalculateScorEmp(can.CandidateId, jobId);
+
+                // Create DTO including job details + score
+                var suggestion = new MatchDto
+                {
+                    
+                    JobId = jobId,
+                    CandidateId = can.CandidateId,
+                    MatchScore = score,
+                    Status = "rejected",
+                    MatchDate = DateTime.Now,
+                };
+                suggestions.Add(suggestion);
+            }
+
+            // Sort descending by MatchScore and take the top suggestion
+            var topSuggestion = suggestions.OrderByDescending(s => s.MatchScore).FirstOrDefault();
+            var top = await GetMatchByJC(topSuggestion.JobId, topSuggestion.CandidateId);
+            if (top != null)
+            {
+                topSuggestion.Id = top.Id;
+                topSuggestion.Candidate = top.Candidate;
+                topSuggestion.JobId = top.JobId;
+                topSuggestion.MatchDate = DateTime.Now;
+                
+                await UpdateItem(top.Id, topSuggestion);
+            }
+            return topSuggestion;
+        }
+        // 3. מיון יורד לפי Score ולקיחת 20 הראשונים
+        public async Task<List<MatchDto>> GetRejecteds(int idEmp)
+        {
+            var allMachesEmp = await GetMatchsByEmpID(idEmp);
+            return allMachesEmp.Where(a => a.Status == "rejected").ToList();
+        }
+
     }
+
 }
+
+

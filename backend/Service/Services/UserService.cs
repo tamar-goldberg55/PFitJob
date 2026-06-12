@@ -1,9 +1,10 @@
 ﻿using AutoMapper;
+using Repository.Interfaces;
 using Repository.models;
 using Service.Dto;
 using Service.Interfaces;
-using Repository.Interfaces;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -17,19 +18,31 @@ namespace Service.Services
         private readonly IRepositoryEmployer _employerRepository;
         private readonly IMapper _mapper;
         private readonly ITokenService _tokenService;
+        private readonly ITokenBlacklist _blacklist;
+
 
         public UserService(
             IRepository<User> userRepository,
             IRepository<CandidateProfiles> candidateRepository,
             IRepositoryEmployer employerRepository,
             IMapper map,
-            ITokenService tokenService)
+            ITokenService tokenService, ITokenBlacklist blacklist
+)
         {
             _userRepository = userRepository;
             _candidateRepository = candidateRepository;
             _employerRepository = employerRepository;
             _mapper = map;
             _tokenService = tokenService;
+            _blacklist = blacklist;
+
+        }
+        public async Task LogoutAsync(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
+            _blacklist.RevokeToken(token, jwt.ValidTo);
+            await Task.CompletedTask;
         }
 
         //public async Task<string> RegisterAsync(UserDto userDto, string password, UserRole role)
@@ -83,11 +96,11 @@ namespace Service.Services
 
             if (role == UserRole.Candidate)
             {
-                await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id });
+                await _candidateRepository.AddItem(new CandidateProfiles { UserId = addedUser.Id, CategoryId = 3, City = "לא צוין", MaxDistance = 50, MinHourlyRate = 0 });
             }
             else if (role == UserRole.Employer)
             {
-                await _employerRepository.AddItem(new Employer { UserId = addedUser.Id });
+                await _employerRepository.AddItem(new Employer { UserId = addedUser.Id, CompanyName = "חברה חדשה" });
             }
 
             return _tokenService.GenerateToken(addedUser);

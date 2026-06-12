@@ -1,27 +1,28 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer; // çåáä ìäåñéó
-using Microsoft.CodeAnalysis.Options;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens; // çåáä ìäåñéó
-using Microsoft.OpenApi.Models;
-using Repository.DataRepositories;
-using Repository.Interfaces;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using Repository.models;
+using Microsoft.OpenApi.Models;
 using Service.Interfaces;
 using Service.Services;
-using System.Text;
+using Repository.DataRepositories;
+using AutoMapper;
+using CodeFirst;
+using Repository.Interfaces;
 
 namespace WebApi
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
             var jwtSection = builder.Configuration.GetSection("Jwt");
             var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("jwt:Key is not configured in appsettings.json");
-
             var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("jwt:Issuer is not configured in appsettings.json");
             var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("jwt:Audience is not configured in appsettings.json");
+<<<<<<< HEAD:backend/WebApi/Program.cs
             // 1. äâãøú CORS
             //builder.Services.AddCors(options =>
             //{
@@ -33,6 +34,10 @@ namespace WebApi
             //    });
             //});
             // ìàìä ùìçä 
+=======
+
+            // CORS Configuration
+>>>>>>> 5dd51c7589754ed57e383be870c0049670244632:WebApi/Program.cs
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowReactApp",
@@ -41,9 +46,8 @@ namespace WebApi
             //
 
 
-            // 2. äâãøú Authentication (àéîåú) - æä äçì÷ ùçñø ìê!
-            // ååãàé ùäîôúç ëàï æää áãéå÷ ìîôúç á-TokenService
-            var key = Encoding.UTF8.GetBytes("YourSuperSecretKeyMustBeAtLeast32CharactersLong");
+            // Authentication Configuration
+            var key = Encoding.UTF8.GetBytes(jwtKey);
 
             builder.Services.AddAuthentication(options =>
             {
@@ -59,23 +63,33 @@ namespace WebApi
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
                     ValidateIssuer = true,
-                    ValidIssuer = jwtIssuer,// æää ì-TokenService
+                    ValidIssuer = jwtIssuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtAudience, // æää ì-TokenService
+                    ValidAudience = jwtAudience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
-
             });
+<<<<<<< HEAD:backend/WebApi/Program.cs
           
 
 
             // 3. øéùåí ùéøåúéí (DI)
+=======
+
+            // Database Configuration
+>>>>>>> 5dd51c7589754ed57e383be870c0049670244632:WebApi/Program.cs
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddScoped<Repository.Interfaces.IContext, CodeFirst.DataBase>();
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+           .AddJsonOptions(options =>
+           {
+               // ×–×” ×™×§×˜×¢ ××ª ×”××¢×’×œ×™×•×ª ×‘××•×¤×Ÿ ××•×˜×•××˜×™ ×‘×–××Ÿ ×™×¦×™×¨×ª ×”-JSON
+               options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+               options.JsonSerializerOptions.WriteIndented = true;
+           });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -110,7 +124,7 @@ namespace WebApi
     });
             });
 
-            // øéùåí Services
+            // Services
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ICandidateProfile, CandidateService>();
             builder.Services.AddScoped<IJobListings, JobListingsService>();
@@ -118,34 +132,168 @@ namespace WebApi
             builder.Services.AddScoped<IUser, UserService>();
             builder.Services.AddScoped<ICategories, CategoryService>();
             builder.Services.AddScoped<IEmployer, EmployerService>();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<ITokenBlacklist, TokenBlacklistService>();
+
 
             builder.Services.AddAutoMapper(typeof(Service.Services.MyMapper).Assembly);
 
-            // øéùåí Repositories
+            // Repositories
             builder.Services.AddScoped<IRepository<User>, UserRepository>();
             builder.Services.AddScoped<IRepositoryEmployer, EmployerRepository>();
             builder.Services.AddScoped<IRepository<Match>, MatchRepository>();
             builder.Services.AddScoped<IRepository<Categories>, CategoriesRepository>();
             builder.Services.AddScoped<IRepository<JobListings>, JobListingsRepository>();
             builder.Services.AddScoped<IRepository<CandidateProfiles>, CandidateProfilesRepository>();
+            builder.Services.AddScoped<IRepositoryCandidateProfiles, CandidateProfilesRepository>();
+
+            // Extended Repository ×¢× Include
+            builder.Services.AddScoped<JobListingsExtendedRepository>();
+
+            // Add Daily Matching Service
+            builder.Services.AddHostedService<Service.Services.DailyMatchingService>();
 
             var app = builder.Build();
 
-            // 4. äâãøú ä-Pipeline (äñãø ëàï ÷øéèé!)
+            // Pipeline Configuration
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(); // ÷åãí ëì CORS
+            app.UseCors(); // Enable CORS
             app.UseHttpsRedirection();
+            app.Use(async (context, next) =>
+            {
+                var token = context.Request.Headers["Authorization"]
+                    .ToString().Replace("Bearer ", "");
 
-            app.UseAuthentication(); // 1. áãé÷ä îé äîùúîù (çåáä ìôğé Authorization)
-            app.UseAuthorization();  // 2. áãé÷ä îä îåúø ìå ìòùåú
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var blacklist = context.RequestServices
+                        .GetRequiredService<ITokenBlacklist>();
+                    if (blacklist.IsRevoked(token))
+                    {
+                        context.Response.StatusCode = 401;
+                        await context.Response.WriteAsync("Token revoked");
+                        return;
+                    }
+                }
+                await next();
+            });
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            // Seed Data for testing
+            await SeedData(app.Services);
 
             app.MapControllers();
             app.Run();
+        }
+
+        static async Task SeedData(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<DataBase>();
+
+            Console.WriteLine("ğŸŒ± Starting Seed Data creation...");
+
+            try
+            {
+                // ×‘×“×™×§×” ×× ×›×‘×¨ ×™×© × ×ª×•× ×™×
+                var existingCandidates = await context.CandidateProfiles.AnyAsync();
+                if (existingCandidates)
+                {
+                    Console.WriteLine("ğŸ“Š Seed Data already exists, skipping...");
+                    return;
+                }
+
+                // ×™×¦×™×¨×ª Users ×¡×™× ×ª×˜×™×™× ×œ×¤× ×™ ×™×¦×™×¨×ª CandidateProfiles - ××ª××™× ×œ××‘× ×” ×”×××™×ª×™ ×©×œ User
+                var users = new List<User>
+                {
+                    new User { Id = 1001, Name = "×“× ×™ ×›×”×Ÿ", Email = "dani.cohen@test.com", PasswordHash = "hashed_password_1001", UserType = UserRole.Candidate, IsEnable = true },
+                    new User { Id = 1002, Name = "×©×¨×” ×œ×•×™", Email = "sara.levi@test.com", PasswordHash = "hashed_password_1002", UserType = UserRole.Candidate, IsEnable = true },
+                    new User { Id = 1003, Name = "××©×” ×™×©×¨××œ×™", Email = "moshe.israeli@test.com", PasswordHash = "hashed_password_1003", UserType = UserRole.Candidate, IsEnable = true }
+                };
+
+                await context.Users.AddRangeAsync(users);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"âœ… Created {users.Count} users");
+
+                // ×™×¦×™×¨×ª Candidates ×œ×‘×“×™×§×” - ××ª××™× ×œ××‘× ×” ×”×××™×ª×™ ×©×œ CandidateProfiles
+                var candidates = new List<CandidateProfiles>
+                {
+                    new CandidateProfiles
+                    {
+                        UserId = 1001, // ×™×¦×™×¨×ª UserId ×¡×™× ×ª×˜×™
+                        CategoryId = 3,
+                        City = "×ª×œ ××‘×™×‘",
+                        MaxDistance = 50,
+                        MinHourlyRate = 150,
+                        activity = true,
+                        level = elevel.Medium,
+                        IsRemoteOnly = false,
+                        Withpepole = true
+                    },
+                    new CandidateProfiles
+                    {
+                        UserId = 1002, // ×™×¦×™×¨×ª UserId ×¡×™× ×ª×˜×™
+                        CategoryId = 2,
+                        City = "×™×¨×•×©×œ×™×",
+                        MaxDistance = 30,
+                        MinHourlyRate = 120,
+                        activity = true,
+                        level = elevel.Easy,
+                        IsRemoteOnly = true,
+                        Withpepole = false
+                    },
+                    new CandidateProfiles
+                    {
+                        UserId = 1003, // ×™×¦×™×¨×ª UserId ×¡×™× ×ª×˜×™
+                        CategoryId = 1,
+                        City = "×—×™×¤×”",
+                        MaxDistance = 100,
+                        MinHourlyRate = 180,
+                        activity = true,
+                        level = elevel.Hard,
+                        IsRemoteOnly = false,
+                        Withpepole = true
+                    }
+                };
+
+                await context.CandidateProfiles.AddRangeAsync(candidates);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"âœ… Created {candidates.Count} candidates");
+
+                // ×™×¦×™×¨×ª Matches ×¢× JobId 2102
+                var matches = new List<Match>();
+                var jobId = 2102; // ×”-JobId ×”×§×™×™× ×‘××¢×¨×›×ª
+
+                foreach (var candidate in candidates)
+                {
+                    matches.Add(new Match
+                    {
+                        CandidateId = candidate.Id,
+                        JobId = jobId,
+                        MatchScore = new Random().NextDouble() * 40 + 60, // ×¦×™×•×Ÿ ×‘×™×Ÿ 60-100
+                        MatchDate = DateTime.Now.AddHours(-new Random().Next(1, 24)),
+                        IsSelectedByAlgorithm = true,
+                        Status = "pending" // ×¡×˜×˜×•×¡ ×”×ª×—×œ×ª×™
+                    });
+                }
+
+                await context.Match.AddRangeAsync(matches);
+                await context.SaveChangesAsync();
+                Console.WriteLine($"âœ… Created {matches.Count} matches for JobId {jobId}");
+
+                Console.WriteLine("ğŸ‰ Seed Data completed successfully!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"âŒ Error creating Seed Data: {ex.Message}");
+            }
         }
     }
 }

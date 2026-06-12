@@ -20,14 +20,16 @@ namespace Repository.models
         [Key]
         public int Id { get; set; }
         [ForeignKey("Category")]
-        public int ?CategoryId { get; set; } // המזהה של הקטגוריה (למשל: 1 עבור תכנות)
+        public int? CategoryId { get; set; } = 3; // ברירת מחדל: קטגוריה 3
         public Categories ?Category { get; set; } // האובייקט המלא של הקטגוריה
         [ForeignKey("User")]
         public int UserId { get; set; } // FK למשתמש
         public User ?User { get; set; }
-        public string ?City { get; set; } // עיר מגורים
-        public int ?MaxDistance { get; set; } // מרחק מקסימלי בק"מ
-        public decimal ?MinHourlyRate { get; set; } // שכר מינימום מבוקש
+       public string? City { get; set; }
+        [Column(TypeName = "decimal(18,2)")]
+        public  decimal? MaxDistance { get; set; } // מרחק מקסימלי בק"מ
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? MinHourlyRate { get; set; } // שכר מינימום מבוקש
         public bool activity { get; set; } = true;
         public elevel level { get; set; } = elevel.Easy;
         public bool IsRemoteOnly { get; set; }// האם המועמד מעוניין רק בעבודה מרחוק?

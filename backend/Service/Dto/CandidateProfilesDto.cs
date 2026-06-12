@@ -11,10 +11,11 @@ namespace Service.Dto
     {
         public int Id { get; set; }
         public int UserId { get; set; } // משאירים את ה-ID כדי לדעת למי הפרופיל שייך
+        public int CategoryId { get; set; } = 3; // קטגוריית העדפה - ברירת מחדל: 3
 
-        public string City { get; set; }
-        public int MaxDistance { get; set; } // החזרנו את המרחק
-        public decimal MinHourlyRate { get; set; }
+        public string? City { get; set; }
+        public int? MaxDistance { get; set; } // החזרנו את המרחק - nullable כמו במודל
+        public decimal? MinHourlyRate { get; set; } // nullable כמו במודל
         public bool Activity { get; set; } // האם הפרופיל פעיל
 
         public elevel Level { get; set; } // שליחת ה-Enum כטקסט (למשל "Easy")

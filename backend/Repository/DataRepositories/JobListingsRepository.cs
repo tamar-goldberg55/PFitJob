@@ -48,7 +48,7 @@ namespace Repository.DataRepositories
         public Task<JobListings> GetById(int id)
         {
             //return _context.JobListings.ToList().FirstOrDefaultAsync(x => x.Id == id);
-            return  _context.JobListings.FirstOrDefaultAsync(x => x.Id == id);
+                return  _context.JobListings.FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task UpdateItem(int id, JobListings item)
@@ -61,10 +61,14 @@ namespace Repository.DataRepositories
                 // במודל שלך לא היה Name, אז הנה דוגמא לשדה שקיים (כמו Title)
                 jobListing.Title = item.Title;
                 jobListing.Description = item.Description;
+                jobListing.Location = item.Location;
                 jobListing.IsCatch = item.IsCatch; // זה הסטטוס שרצית
                 jobListing.Payment = item.Payment;
                 jobListing.CategoryId = item.CategoryId;
                 jobListing.EmployerId = item.EmployerId;
+                jobListing.leveJob = item.leveJob;
+                jobListing.IsRemote = item.IsRemote;
+                jobListing.IsJobWithPepole = item.IsJobWithPepole;
 
                 // 3. שמירה מסונכרנת (אופציונלי להפוך ל-Async גם ב-Context)
                 _context.save();

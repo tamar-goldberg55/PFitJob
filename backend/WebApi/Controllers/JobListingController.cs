@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Service.Dto;
 using Service.Interfaces;
+using Service.Services;
 
 namespace WebApi.Controllers
 {
@@ -23,7 +24,7 @@ namespace WebApi.Controllers
         {
             return await _jobListingsService.GetAll();
         }
-        [HttpGet("getByEmp{id}")]
+        [HttpGet("getByEmp/{id}")]
         public async Task<List<JobListingsDto>> GetByEmployer(int id)
         {
             return await _jobListingsService.GetJobByEmployer(id);
@@ -35,6 +36,11 @@ namespace WebApi.Controllers
         public async Task<JobListingsDto> Get(int id)
         {
             return await _jobListingsService.GetById(id);
+        }
+        [HttpGet("GetTopMatches/{idCandidate}")]
+        public async Task<List<JobSuggestionDto>> GetTopMatchesForCandidate(int idCandidate )
+        {
+            return await _jobListingsService.GetTopMatchesForCandidate(idCandidate);
         }
 
         // POST api/JobListings
@@ -70,6 +76,12 @@ namespace WebApi.Controllers
         public async Task<bool> ToggleStatus(int id, [FromQuery] bool isActive)
         {
             return await _jobListingsService.ToggleJobStatus(id, isActive);
+        }
+        [HttpGet("employer/{empId}/applicants")]
+        public async Task<ActionResult<List<EmployerOffersDto>>> GetApplicantsByEmployer(int empId)
+        {
+            var result = await _jobListingsService.GetEmployerJobsDetailed(empId);
+            return Ok(result);
         }
     }
 }
