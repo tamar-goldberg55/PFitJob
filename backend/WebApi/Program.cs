@@ -23,15 +23,23 @@ namespace WebApi
             var jwtIssuer = jwtSection["Issuer"] ?? throw new InvalidOperationException("jwt:Issuer is not configured in appsettings.json");
             var jwtAudience = jwtSection["Audience"] ?? throw new InvalidOperationException("jwt:Audience is not configured in appsettings.json");
             // 1. הגדרת CORS
+            //builder.Services.AddCors(options =>
+            //{
+            //    options.AddDefaultPolicy(policy =>
+            //    {
+            //        policy.AllowAnyOrigin()
+            //              .AllowAnyHeader()
+            //              .AllowAnyMethod();
+            //    });
+            //});
+            // לאלה שלחה 
             builder.Services.AddCors(options =>
             {
-                options.AddDefaultPolicy(policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
-                });
+                options.AddPolicy("AllowReactApp",
+                    policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
+            //
+
 
             // 2. הגדרת Authentication (אימות) - זה החלק שחסר לך!
             // וודאי שהמפתח כאן זהה בדיוק למפתח ב-TokenService
@@ -60,6 +68,8 @@ namespace WebApi
 
             });
           
+
+
             // 3. רישום שירותים (DI)
             builder.Services.AddDbContext<CodeFirst.DataBase>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

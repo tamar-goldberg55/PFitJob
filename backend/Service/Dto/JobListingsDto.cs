@@ -32,5 +32,8 @@ namespace Service.Dto
         public bool IsCatch { get; set; }
         public bool IsRemote { get; set; }
         public bool IsJobWithPepole { get; set; }
+    
+
+
     }
 }
